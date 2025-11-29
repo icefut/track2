@@ -22,10 +22,10 @@ function mapStatusToSwedish(milestone) {
   }
 }
 
-// Regex för att hitta PostNord-nummer (UJ... eller 003...)
+// Försök hitta PostNord-nummer: UJ... eller 003...
 const postnordRegex = /(UJ[0-9A-Z]{8,}|003[0-9]{8,})/;
 
-// Anropa Ship24 med https.request
+// Anropa Ship24 med https
 function callShip24(apiKey, trackingNumber) {
   return new Promise((resolve, reject) => {
     const body = JSON.stringify({ trackingNumber });
@@ -53,7 +53,9 @@ function callShip24(apiKey, trackingNumber) {
           const json = JSON.parse(data);
           resolve({ statusCode: res.statusCode, body: json });
         } catch (err) {
-          reject(new Error("Kunde inte tolka svar från Ship24: " + err.message));
+          reject(
+            new Error("Kunde inte tolka svar från Ship24: " + err.message)
+          );
         }
       });
     });
@@ -104,20 +106,43 @@ module.exports = async (req, res) => {
       return;
     }
 
-    // Plocka ut data från Ship24
-    const tracker =
-      body &&
-      body.data &&
-      body.data.trackers &&
-      body.data.trackers[0];
+    // ---- Plocka ut tracking / shipment / events robust ----
+    const data = body && body.data ? body.data : null;
 
-    const shipment = tracker && tracker.shipment;
-    const events = (shipment && shipment.events) || [];
+    let tracking = null;
+    if (data) {
+      if (Array.isArray(data.trackers) && data.trackers.length) {
+        tracking = data.trackers[0];
+      } else if (Array.isArray(data.trackings) && data.trackings.length) {
+        tracking = data.trackings[0];
+      }
+    }
 
-    // Ship24 brukar lägga "huvudstatus" i statistics.statusMilestone
-    const statistics =
+    let shipment = null;
+    if (tracking) {
+      if (tracking.shipment) {
+        shipment = tracking.shipment;
+      } else if (
+        Array.isArray(tracking.shipments) &&
+        tracking.shipments.length
+      ) {
+        shipment = tracking.shipments[0];
+      }
+    }
+
+    let events = [];
+    if (shipment) {
+      if (Array.isArray(shipment.events)) {
+        events = shipment.events;
+      } else if (Array.isArray(shipment.trackingEvents)) {
+        events = shipment.trackingEvents;
+      }
+    }
+
+    // Statistik / huvudstatus
+    let statistics =
       (shipment && shipment.statistics) ||
-      (tracker && tracker.statistics) ||
+      (tracking && tracking.statistics) ||
       null;
 
     let milestone =
@@ -125,7 +150,6 @@ module.exports = async (req, res) => {
       (events[0] && events[0].statusMilestone) ||
       null;
 
-    // För säkerhets skull: om milestone fortfarande är null men events finns med statusMilestone
     if (!milestone && events.length) {
       const evWithMilestone = events.find(
         (ev) => ev && ev.statusMilestone
@@ -135,12 +159,8 @@ module.exports = async (req, res) => {
       }
     }
 
-    // Hitta "senaste uppdatering"
-    let lastEvent = null;
-    if (events.length) {
-      lastEvent = events[0]; // Ship24 skickar ofta senaste först
-    }
-
+    // Senaste uppdatering
+    let lastEvent = events.length ? events[0] : null;
     let lastUpdate =
       (lastEvent && lastEvent.occurrenceDatetime) ||
       (statistics &&
@@ -149,7 +169,7 @@ module.exports = async (req, res) => {
           statistics.timestamps.infoReceivedDatetime)) ||
       null;
 
-    // Hitta PostNord-nummer i event-text
+    // Leta PostNord-nummer i event-text
     let postnordNumber = null;
     for (const ev of events) {
       if (ev && typeof ev.status === "string") {
