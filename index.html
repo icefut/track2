@@ -14,7 +14,7 @@
       }
 
       #icefot-track-wrapper {
-        max-width: 800px;
+        max-width: 900px;
         margin: 30px auto;
         padding: 20px;
         border-radius: 8px;
@@ -67,6 +67,7 @@
       #icefot-track-result {
         font-size: 14px;
         line-height: 1.5;
+        margin-top: 10px;
       }
 
       #icefot-track-result h3 {
@@ -103,7 +104,7 @@
         <input
           id="icefot-track-input"
           type="text"
-          placeholder="Till exempel: 4PX3002256791654CN"
+          placeholder="Till exempel: 4PX3002271569849CN"
           required
         />
         <button id="icefot-track-button" type="submit">Spåra paket</button>
@@ -113,6 +114,7 @@
     </div>
 
     <script>
+      // URL till ditt API på Vercel
       var icefotApiBase = "https://track2-three.vercel.app/api/track";
 
       function icefotFormatDateTime(dt) {
@@ -151,7 +153,8 @@
               button.disabled = false;
 
               if (!data || data.ok === false) {
-                var msg = "Kunde inte hämta spårning just nu.";
+                var msg =
+                  "Kunde inte hämta spårning just nu. Kontrollera att spårnumret är korrekt.";
                 if (data && data.error) {
                   msg += " (" + data.error + ")";
                 }
@@ -161,15 +164,44 @@
 
               var html = "";
 
+              // Spårningsnummer
               html +=
                 "<p><strong>Spårningsnummer:</strong> " +
                 (data.trackingNumber || tn) +
                 "</p>";
+
+              // Bestäm status att visa
+              var displayStatus = data.statusSwedish || "";
+
+              // Om statusSwedish är tom eller "Ingen spårningsinformation ännu"
+              // men vi har events – använd senaste eventet istället
+              var hasEvents = Array.isArray(data.events) && data.events.length > 0;
+              if (
+                hasEvents &&
+                (!displayStatus ||
+                  displayStatus === "Ingen spårningsinformation ännu")
+              ) {
+                var firstEvent = data.events[0]; // senaste händelse
+                if (firstEvent.milestoneSwedish) {
+                  displayStatus =
+                    firstEvent.milestoneSwedish + " (se händelser nedan)";
+                } else if (firstEvent.rawStatus) {
+                  displayStatus = firstEvent.rawStatus;
+                } else {
+                  displayStatus = "På väg (se händelser nedan)";
+                }
+              }
+
+              if (!displayStatus) {
+                displayStatus = "Ingen spårningsinformation tillgänglig ännu.";
+              }
+
               html +=
                 "<p><strong>Status:</strong> " +
-                (data.statusSwedish || "-") +
+                displayStatus +
                 "</p>";
 
+              // PostNord-nummer
               if (data.postnordNumber) {
                 html +=
                   "<p><strong>PostNord-spårningsnummer:</strong> " +
@@ -179,10 +211,10 @@
                   "' target='_blank' rel='noopener noreferrer'>Öppna spårning hos PostNord</a></p>";
               } else {
                 html +=
-                  "<p><strong>PostNord-spårningsnummer:</strong> Är ännu inte tilldelat. " +
-                  "När paketet har nått Sverige brukar ett PostNord-nummer skapas automatiskt.</p>";
+                  "<p><strong>PostNord-spårningsnummer:</strong> Är ännu inte tilldelat. När paketet har nått Sverige brukar ett PostNord-nummer skapas automatiskt.</p>";
               }
 
+              // Senaste uppdatering
               if (data.lastUpdate) {
                 html +=
                   "<p><strong>Senast uppdaterad:</strong> " +
@@ -190,7 +222,8 @@
                   "</p>";
               }
 
-              if (Array.isArray(data.events) && data.events.length) {
+              // Händelser
+              if (hasEvents) {
                 html += "<h3>Händelser</h3>";
                 html += "<ul id='icefot-events-list'>";
                 data.events.forEach(function (ev) {
@@ -198,8 +231,7 @@
                     "<li><small>" +
                     (icefotFormatDateTime(ev.time) || "") +
                     "</small><br>" +
-                    (ev.milestoneSwedish || "") +
-                    (ev.rawStatus ? " (" + ev.rawStatus + ")" : "") +
+                    (ev.milestoneSwedish || ev.rawStatus || "") +
                     "</li>";
                 });
                 html += "</ul>";
