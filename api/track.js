@@ -1,5 +1,7 @@
 // api/track.js
-// En enkel Vercel Serverless Function som anropar Ship24 och returnerar svensk data
+// Vercel Serverless Function som anropar Ship24 via Node's https och returnerar svensk data
+
+const https = require("https");
 
 function mapStatusToSwedish(milestone) {
   switch (milestone) {
@@ -23,8 +25,50 @@ function mapStatusToSwedish(milestone) {
   }
 }
 
-// En enkel regex för att hitta PostNord-nummer, typ UJxxxxxxxx eller 003xxxxxxxx
+// Regex för att hitta PostNord-nummer (UJ... eller 003...)
 const postnordRegex = /(UJ[0-9A-Z]{8,}|003[0-9]{8,})/;
+
+// Helper: anropa Ship24 med https.request
+function callShip24(apiKey, trackingNumber) {
+  return new Promise((resolve, reject) => {
+    const body = JSON.stringify({ trackingNumber });
+
+    const options = {
+      hostname: "api.ship24.com",
+      path: "/public/v1/trackers/track",
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Length": Buffer.byteLength(body),
+      },
+    };
+
+    const req = https.request(options, (res) => {
+      let data = "";
+
+      res.on("data", (chunk) => {
+        data += chunk;
+      });
+
+      res.on("end", () => {
+        try {
+          const json = JSON.parse(data);
+          resolve({ statusCode: res.statusCode, body: json });
+        } catch (err) {
+          reject(new Error("Kunde inte tolka svar från Ship24: " + err.message));
+        }
+      });
+    });
+
+    req.on("error", (err) => {
+      reject(err);
+    });
+
+    req.write(body);
+    req.end();
+  });
+}
 
 module.exports = async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -42,21 +86,58 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const response = await fetch("https://api.ship24.com/public/v1/trackers/track", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        trackingNumber: tn
-      }),
-    });
+    const { statusCode, body } = await callShip24(apiKey, tn);
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      res.status(response.status).json({
+    if (statusCode < 200 || statusCode >= 300) {
+      res.status(statusCode).json({
         error: "Fel från Ship24",
-        details: data,
+        details: body,
       });
+      return;
+    }
+
+    const tracker =
+      body &&
+      body.data &&
+      body.data.trackers &&
+      body.data.trackers[0];
+
+    const shipment = tracker && tracker.shipment;
+    const events = (shipment && shipment.events) || [];
+
+    const lastEvent = events[0] || null;
+    const milestone = lastEvent && lastEvent.statusMilestone;
+    const statusSwedish = mapStatusToSwedish(milestone);
+
+    let postnordNumber = null;
+    for (const ev of events) {
+      if (ev && typeof ev.status === "string") {
+        const match = ev.status.match(postnordRegex);
+        if (match) {
+          postnordNumber = match[0];
+          break;
+        }
+      }
+    }
+
+    res.status(200).json({
+      trackingNumber: tn,
+      statusMilestone: milestone || null,
+      statusSwedish,
+      postnordNumber,
+      lastUpdate: lastEvent ? lastEvent.occurrenceDatetime : null,
+      events: events.map((ev) => ({
+        time: ev.occurrenceDatetime,
+        rawStatus: ev.status,
+        milestone: ev.statusMilestone,
+        milestoneSwedish: mapStatusToSwedish(ev.statusMilestone),
+      })),
+    });
+  } catch (err) {
+    console.error("Internt fel:", err);
+    res.status(500).json({
+      error: "Tekniskt fel när vi hämtade spårning",
+      details: err.message || String(err),
+    });
+  }
+};
