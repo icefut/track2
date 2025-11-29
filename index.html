@@ -1,1 +1,222 @@
+<!doctype html>
+<html lang="sv">
+  <head>
+    <meta charset="utf-8" />
+    <title>Spåra din beställning – Icefot</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        background: #ffffff;
+      }
 
+      #icefot-track-wrapper {
+        max-width: 800px;
+        margin: 30px auto;
+        padding: 20px;
+        border-radius: 8px;
+        border: 1px solid #e2e2e2;
+        background: #fafafa;
+      }
+
+      #icefot-track-wrapper h2 {
+        margin-top: 0;
+        margin-bottom: 10px;
+        font-size: 22px;
+      }
+
+      #icefot-track-wrapper p {
+        margin: 0 0 10px 0;
+        font-size: 14px;
+      }
+
+      #icefot-track-form {
+        display: flex;
+        gap: 8px;
+        margin-top: 10px;
+        margin-bottom: 15px;
+      }
+
+      #icefot-track-input {
+        flex: 1;
+        padding: 10px;
+        border-radius: 4px;
+        border: 1px solid #ccc;
+        font-size: 14px;
+      }
+
+      #icefot-track-button {
+        padding: 10px 18px;
+        border-radius: 4px;
+        border: none;
+        background: #000;
+        color: #fff;
+        font-size: 14px;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+
+      #icefot-track-button:disabled {
+        opacity: 0.7;
+        cursor: default;
+      }
+
+      #icefot-track-result {
+        font-size: 14px;
+        line-height: 1.5;
+      }
+
+      #icefot-track-result h3 {
+        margin-top: 15px;
+        margin-bottom: 8px;
+        font-size: 16px;
+      }
+
+      #icefot-events-list {
+        list-style: none;
+        padding-left: 0;
+        margin: 0;
+        border-top: 1px solid #e2e2e2;
+      }
+
+      #icefot-events-list li {
+        padding: 6px 0;
+        border-bottom: 1px solid #f0f0f0;
+      }
+
+      #icefot-events-list small {
+        color: #666;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="icefot-track-wrapper">
+      <h2>Spåra din beställning</h2>
+      <p>
+        Skriv in ditt 4PX-spårningsnummer nedan för att se status på ditt paket.
+      </p>
+
+      <form id="icefot-track-form">
+        <input
+          id="icefot-track-input"
+          type="text"
+          placeholder="Till exempel: 4PX3002256791654CN"
+          required
+        />
+        <button id="icefot-track-button" type="submit">Spåra paket</button>
+      </form>
+
+      <div id="icefot-track-result"></div>
+    </div>
+
+    <script>
+      var icefotApiBase = "https://track2-three.vercel.app/api/track";
+
+      function icefotFormatDateTime(dt) {
+        if (!dt) return "-";
+        try {
+          var d = new Date(dt);
+          if (isNaN(d.getTime())) return dt;
+          return d.toLocaleString("sv-SE");
+        } catch (e) {
+          return dt;
+        }
+      }
+
+      (function () {
+        var form = document.getElementById("icefot-track-form");
+        var input = document.getElementById("icefot-track-input");
+        var button = document.getElementById("icefot-track-button");
+        var result = document.getElementById("icefot-track-result");
+
+        if (!form || !input || !button || !result) return;
+
+        form.addEventListener("submit", function (e) {
+          e.preventDefault();
+
+          var tn = input.value.trim();
+          if (!tn) return;
+
+          result.textContent = "Hämtar spårningsinformation...";
+          button.disabled = true;
+
+          fetch(icefotApiBase + "?tn=" + encodeURIComponent(tn))
+            .then(function (r) {
+              return r.json();
+            })
+            .then(function (data) {
+              button.disabled = false;
+
+              if (!data || data.ok === false) {
+                var msg = "Kunde inte hämta spårning just nu.";
+                if (data && data.error) {
+                  msg += " (" + data.error + ")";
+                }
+                result.textContent = msg;
+                return;
+              }
+
+              var html = "";
+
+              html +=
+                "<p><strong>Spårningsnummer:</strong> " +
+                (data.trackingNumber || tn) +
+                "</p>";
+              html +=
+                "<p><strong>Status:</strong> " +
+                (data.statusSwedish || "-") +
+                "</p>";
+
+              if (data.postnordNumber) {
+                html +=
+                  "<p><strong>PostNord-spårningsnummer:</strong> " +
+                  data.postnordNumber +
+                  "<br><a href='https://portal.postnord.com/tracking/details/" +
+                  data.postnordNumber +
+                  "' target='_blank' rel='noopener noreferrer'>Öppna spårning hos PostNord</a></p>";
+              } else {
+                html +=
+                  "<p><strong>PostNord-spårningsnummer:</strong> Är ännu inte tilldelat. " +
+                  "När paketet har nått Sverige brukar ett PostNord-nummer skapas automatiskt.</p>";
+              }
+
+              if (data.lastUpdate) {
+                html +=
+                  "<p><strong>Senast uppdaterad:</strong> " +
+                  icefotFormatDateTime(data.lastUpdate) +
+                  "</p>";
+              }
+
+              if (Array.isArray(data.events) && data.events.length) {
+                html += "<h3>Händelser</h3>";
+                html += "<ul id='icefot-events-list'>";
+                data.events.forEach(function (ev) {
+                  html +=
+                    "<li><small>" +
+                    (icefotFormatDateTime(ev.time) || "") +
+                    "</small><br>" +
+                    (ev.milestoneSwedish || "") +
+                    (ev.rawStatus ? " (" + ev.rawStatus + ")" : "") +
+                    "</li>";
+                });
+                html += "</ul>";
+              }
+
+              result.innerHTML = html;
+            })
+            .catch(function (err) {
+              console.error(err);
+              button.disabled = false;
+              result.textContent =
+                "Ett tekniskt fel uppstod när vi hämtade spårning.";
+            });
+
+          return false;
+        });
+      })();
+    </script>
+  </body>
+</html>
