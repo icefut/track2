@@ -22,8 +22,10 @@ function mapStatusToSwedish(milestone) {
   }
 }
 
+// Regex för att hitta PostNord-nummer (UJ... eller 003...)
 const postnordRegex = /(UJ[0-9A-Z]{8,}|003[0-9]{8,})/;
 
+// Anropa Ship24 med https.request
 function callShip24(apiKey, trackingNumber) {
   return new Promise((resolve, reject) => {
     const body = JSON.stringify({ trackingNumber });
@@ -71,7 +73,6 @@ module.exports = async (req, res) => {
   const tn = req.query.tn;
   const apiKey = process.env.SHIP24_API_KEY;
 
-  // Svara alltid med 200, men tala om om något är fel
   try {
     if (!tn) {
       res.status(200).json({
@@ -103,6 +104,7 @@ module.exports = async (req, res) => {
       return;
     }
 
+    // Plocka ut data från Ship24
     const tracker =
       body &&
       body.data &&
@@ -111,9 +113,43 @@ module.exports = async (req, res) => {
 
     const shipment = tracker && tracker.shipment;
     const events = (shipment && shipment.events) || [];
-    const lastEvent = events[0] || null;
-    const milestone = lastEvent && lastEvent.statusMilestone;
 
+    // Ship24 brukar lägga "huvudstatus" i statistics.statusMilestone
+    const statistics =
+      (shipment && shipment.statistics) ||
+      (tracker && tracker.statistics) ||
+      null;
+
+    let milestone =
+      (statistics && statistics.statusMilestone) ||
+      (events[0] && events[0].statusMilestone) ||
+      null;
+
+    // För säkerhets skull: om milestone fortfarande är null men events finns med statusMilestone
+    if (!milestone && events.length) {
+      const evWithMilestone = events.find(
+        (ev) => ev && ev.statusMilestone
+      );
+      if (evWithMilestone) {
+        milestone = evWithMilestone.statusMilestone;
+      }
+    }
+
+    // Hitta "senaste uppdatering"
+    let lastEvent = null;
+    if (events.length) {
+      lastEvent = events[0]; // Ship24 skickar ofta senaste först
+    }
+
+    let lastUpdate =
+      (lastEvent && lastEvent.occurrenceDatetime) ||
+      (statistics &&
+        statistics.timestamps &&
+        (statistics.timestamps.inTransitDatetime ||
+          statistics.timestamps.infoReceivedDatetime)) ||
+      null;
+
+    // Hitta PostNord-nummer i event-text
     let postnordNumber = null;
     for (const ev of events) {
       if (ev && typeof ev.status === "string") {
@@ -131,14 +167,13 @@ module.exports = async (req, res) => {
       statusMilestone: milestone || null,
       statusSwedish: mapStatusToSwedish(milestone),
       postnordNumber,
-      lastUpdate: lastEvent ? lastEvent.occurrenceDatetime : null,
+      lastUpdate,
       events: events.map((ev) => ({
         time: ev.occurrenceDatetime,
         rawStatus: ev.status,
         milestone: ev.statusMilestone,
         milestoneSwedish: mapStatusToSwedish(ev.statusMilestone),
       })),
-      rawShip24: body,
     });
   } catch (err) {
     res.status(200).json({
