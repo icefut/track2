@@ -26,6 +26,16 @@ function mapStatusMilestoneToSwedish(milestone) {
   }
 }
 
+// Liten helper för IP till loggar
+function getClientIp(req) {
+  return (
+    req.headers["x-forwarded-for"] ||
+    req.headers["x-real-ip"] ||
+    req.socket?.remoteAddress ||
+    "unknown"
+  );
+}
+
 module.exports = async (req, res) => {
   // CORS + JSON
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -39,14 +49,29 @@ module.exports = async (req, res) => {
 
   const value = (req.query.value || "").toString().trim();
   const mode = (req.query.mode || "tracking").toString().trim(); // "tracking" | "order"
+  const ip = getClientIp(req);
+
+  // LOG: inkommande request
+  console.log(
+    "[TRACK_REQUEST]",
+    new Date().toISOString(),
+    "mode:",
+    mode,
+    "value:",
+    value,
+    "ip:",
+    ip
+  );
 
   if (!value) {
+    console.error("[TRACK_ERROR] Saknar value i query");
     res.status(400).json({ ok: false, error: "Saknar värde (value) i query" });
     return;
   }
 
   const apiKey = process.env.SHIP24_API_KEY;
   if (!apiKey) {
+    console.error("[TRACK_ERROR] SHIP24_API_KEY är inte satt på servern");
     res
       .status(500)
       .json({ ok: false, error: "SHIP24_API_KEY är inte satt på servern" });
@@ -82,6 +107,13 @@ module.exports = async (req, res) => {
     const data = await response.json();
 
     if (!response.ok) {
+      console.error(
+        "[TRACK_ERROR] Fel från Ship24",
+        "httpStatus:",
+        response.status,
+        "body:",
+        JSON.stringify(data)
+      );
       res.status(response.status).json({
         ok: false,
         error: "Fel från Ship24",
@@ -94,6 +126,13 @@ module.exports = async (req, res) => {
     // Normera Ship24-svaret
     const tracking = data?.data?.trackings?.[0];
     if (!tracking) {
+      console.error(
+        "[TRACK_ERROR] Ingen försändelse hittades hos Ship24",
+        "value:",
+        value,
+        "mode:",
+        mode
+      );
       res.status(404).json({
         ok: false,
         error: "Ingen försändelse hittades hos Ship24",
@@ -131,9 +170,31 @@ module.exports = async (req, res) => {
       })),
     };
 
+    // LOG: lyckad spårning
+    console.log(
+      "[TRACK_SUCCESS]",
+      "mode:",
+      mode,
+      "trackingNumber:",
+      normalized.trackingNumber,
+      "status:",
+      normalized.statusMilestone,
+      normalized.statusSwedish,
+      "postnord:",
+      normalized.postnordNumber || "none"
+    );
+
     res.status(200).json(normalized);
   } catch (err) {
-    console.error("Ship24 API error:", err);
+    console.error(
+      "[TRACK_ERROR] Exception vid Ship24-anrop",
+      "value:",
+      value,
+      "mode:",
+      mode,
+      "message:",
+      err.message
+    );
     res.status(500).json({
       ok: false,
       error: "Internt fel när Ship24 API anropades",
