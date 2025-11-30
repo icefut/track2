@@ -1,240 +1,292 @@
 <!DOCTYPE html>
 <html lang="sv">
-  <head>
-    <meta charset="utf-8" />
-    <title>Spåra din beställning – Icefot</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+<head>
+  <meta charset="UTF-8" />
+  <title>Spåra din beställning</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:#f3f4f6;
+      margin:0;
+      padding:20px;
+    }
+    .container {
+      max-width:900px;
+      margin:0 auto;
+      background:#fff;
+      padding:24px;
+      border-radius:12px;
+      box-shadow:0 10px 25px rgba(0,0,0,0.05);
+    }
+    h1 {
+      margin:0 0 12px;
+      font-size:28px;
+    }
+    p {
+      margin:0 0 16px;
+      color:#4b5563;
+    }
+    .tabs {
+      display:flex;
+      margin-bottom:16px;
+      border-radius:999px;
+      background:#e5e7eb;
+      padding:4px;
+    }
+    .tab {
+      flex:1;
+      text-align:center;
+      padding:8px 12px;
+      font-size:14px;
+      cursor:pointer;
+      border-radius:999px;
+      border:none;
+      background:transparent;
+      transition:background .15s, color .15s;
+    }
+    .tab.active {
+      background:#2563eb;
+      color:#fff;
+      font-weight:600;
+    }
+    .row {
+      display:flex;
+      gap:8px;
+      margin-bottom:16px;
+      flex-wrap:wrap;
+    }
+    input[type="text"] {
+      flex:1;
+      padding:10px 12px;
+      border-radius:8px;
+      border:1px solid #d1d5db;
+      font-size:14px;
+      outline:none;
+    }
+    input[type="text"]:focus {
+      border-color:#2563eb;
+      box-shadow:0 0 0 1px #2563eb33;
+    }
+    button.primary {
+      padding:10px 16px;
+      border-radius:8px;
+      border:none;
+      background:#2563eb;
+      color:#fff;
+      font-weight:600;
+      cursor:pointer;
+      white-space:nowrap;
+    }
+    button.primary:disabled {
+      opacity:.6;
+      cursor:wait;
+    }
+    .status-box {
+      margin-top:8px;
+      padding:12px;
+      background:#f9fafb;
+      border-radius:8px;
+      border:1px solid #e5e7eb;
+      font-size:14px;
+    }
+    .link {
+      color:#2563eb;
+      text-decoration:none;
+      font-weight:500;
+    }
+    .timeline {
+      margin-top:16px;
+      border-left:2px solid #2563eb;
+      padding-left:18px;
+    }
+    .event {
+      margin-bottom:16px;
+      position:relative;
+    }
+    .event::before {
+      content:"";
+      position:absolute;
+      left:-20px;
+      top:3px;
+      width:10px;
+      height:10px;
+      border-radius:999px;
+      background:#2563eb;
+      border:2px solid #fff;
+      box-shadow:0 0 0 2px #2563eb;
+    }
+    .event-time {
+      font-size:13px;
+      color:#6b7280;
+    }
+    .event-status {
+      font-size:14px;
+      font-weight:500;
+    }
+    .event-location {
+      font-size:13px;
+      color:#4b5563;
+    }
+    .error {
+      margin-top:8px;
+      padding:10px 12px;
+      border-radius:8px;
+      background:#fef2f2;
+      color:#b91c1c;
+      border:1px solid #fecaca;
+      font-size:14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Spåra din beställning</h1>
+    <p>Skriv in ditt 4PX-spårningsnummer eller ordernummer nedan för att se status på ditt paket.</p>
 
-    <style>
-      body {
-        margin: 0;
-        padding: 0;
-        font-family: Inter, Arial, sans-serif;
-        background: #f5f7fa;
-      }
-
-      .container {
-        max-width: 900px;
-        margin: 40px auto;
-        background: white;
-        padding: 25px;
-        border-radius: 12px;
-        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.1);
-      }
-
-      h1 {
-        margin: 0 0 10px 0;
-        font-size: 26px;
-        font-weight: 600;
-        color: #1a1a1a;
-      }
-
-      p {
-        color: #555;
-        margin: 0 0 15px 0;
-        font-size: 15px;
-      }
-
-      .input-row {
-        display: flex;
-        gap: 10px;
-        margin-top: 10px;
-      }
-
-      input {
-        flex: 1;
-        padding: 12px;
-        border-radius: 6px;
-        border: 1px solid #d2d6dc;
-        font-size: 15px;
-      }
-
-      button {
-        padding: 12px 20px;
-        background: #2563eb;
-        color: white;
-        border: none;
-        border-radius: 6px;
-        font-size: 15px;
-        cursor: pointer;
-        transition: 0.2s;
-      }
-
-      button:hover {
-        background: #1d4ed8;
-      }
-
-      .result-box {
-        margin-top: 25px;
-        padding: 20px;
-        border-radius: 10px;
-        background: #f9fafb;
-        border: 1px solid #e5e7eb;
-      }
-
-      .label {
-        font-weight: 600;
-        color: #1f2937;
-      }
-
-      h3 {
-        margin-top: 25px;
-        margin-bottom: 10px;
-        font-size: 18px;
-      }
-
-      .timeline {
-        margin-top: 10px;
-        padding-left: 0;
-        list-style: none;
-      }
-
-      .timeline li {
-        padding: 10px 0;
-        border-left: 3px solid #2563eb;
-        margin-left: 10px;
-        padding-left: 15px;
-        position: relative;
-      }
-
-      .timeline li::before {
-        content: "";
-        width: 12px;
-        height: 12px;
-        background: #2563eb;
-        border-radius: 50%;
-        position: absolute;
-        left: -7.5px;
-        top: 14px;
-      }
-
-      .event-time {
-        font-size: 13px;
-        color: #6b7280;
-      }
-
-      .event-status-main {
-        font-size: 15px;
-        font-weight: 600;
-        color: #111827;
-        margin-top: 2px;
-      }
-
-      .event-status-sub {
-        font-size: 14px;
-        color: #374151;
-        margin-top: 2px;
-      }
-
-      .event-location {
-        font-size: 13px;
-        color: #4b5563;
-        margin-top: 2px;
-      }
-    </style>
-  </head>
-
-  <body>
-    <div class="container">
-      <h1>Spåra din beställning</h1>
-      <p>Skriv in ditt 4PX-spårningsnummer nedan för att se status på ditt paket.</p>
-
-      <div class="input-row">
-        <input id="tn" placeholder="Ex: 4PX3002244028809CN" />
-        <button onclick="track()">Spåra</button>
-      </div>
-
-      <div id="result"></div>
+    <div class="tabs">
+      <button class="tab active" id="tab-tracking">Spårningsnummer</button>
+      <button class="tab" id="tab-order">Ordernummer</button>
     </div>
 
-    <script>
-      const API_URL = "https://track2-three.vercel.app/api/track";
+    <form id="track-form">
+      <input type="hidden" id="mode" value="tracking" />
 
-      function formatDate(dt) {
-        if (!dt) return "-";
-        try {
-          return new Date(dt).toLocaleString("sv-SE");
-        } catch {
-          return dt;
+      <div class="row">
+        <input
+          type="text"
+          id="input"
+          placeholder="4PX-nummer, t.ex. 4PX3002..."
+          autocomplete="off"
+        />
+        <button type="submit" class="primary" id="submit-btn">Spåra</button>
+      </div>
+    </form>
+
+    <div id="error" class="error" style="display:none;"></div>
+
+    <div id="result" style="display:none;">
+      <div class="status-box">
+        <div><strong>Spårningsnummer:</strong> <span id="res-tn"></span></div>
+        <div><strong>Order/Client ID:</strong> <span id="res-client"></span></div>
+        <div><strong>Status:</strong> <span id="res-status"></span></div>
+        <div><strong>PostNord nr:</strong> <span id="res-postnord"></span></div>
+        <div><strong>Senast uppdaterad:</strong> <span id="res-updated"></span></div>
+        <div id="res-postnord-link" style="margin-top:4px;"></div>
+      </div>
+
+      <h3 style="margin-top:20px;">Händelser</h3>
+      <div id="events" class="timeline"></div>
+    </div>
+  </div>
+
+  <script>
+    const tabTracking = document.getElementById("tab-tracking");
+    const tabOrder = document.getElementById("tab-order");
+    const modeInput = document.getElementById("mode");
+    const input = document.getElementById("input");
+    const form = document.getElementById("track-form");
+    const btn = document.getElementById("submit-btn");
+    const errorBox = document.getElementById("error");
+    const resultBox = document.getElementById("result");
+
+    function setMode(mode) {
+      modeInput.value = mode;
+      if (mode === "tracking") {
+        tabTracking.classList.add("active");
+        tabOrder.classList.remove("active");
+        input.placeholder = "4PX-nummer, t.ex. 4PX3002...";
+      } else {
+        tabOrder.classList.add("active");
+        tabTracking.classList.remove("active");
+        input.placeholder = "Ordernummer, t.ex. 12345";
+      }
+      input.value = "";
+      resultBox.style.display = "none";
+      errorBox.style.display = "none";
+    }
+
+    tabTracking.addEventListener("click", () => setMode("tracking"));
+    tabOrder.addEventListener("click", () => setMode("order"));
+
+    function formatDate(dt) {
+      if (!dt) return "";
+      const d = new Date(dt);
+      if (isNaN(d.getTime())) return dt;
+      return d.toLocaleString("sv-SE");
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const value = input.value.trim();
+      const mode = modeInput.value;
+
+      if (!value) return;
+
+      errorBox.style.display = "none";
+      resultBox.style.display = "none";
+      btn.disabled = true;
+
+      try {
+        const url = `/api/track?value=${encodeURIComponent(
+          value
+        )}&mode=${encodeURIComponent(mode)}`;
+
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (!data.ok) {
+          throw new Error(
+            data.error || "Kunde inte hitta någon försändelse. Kontrollera numret."
+          );
         }
-      }
 
-      function formatLocation(loc) {
-        if (!loc) return "";
-        const map = {
-          BE: "Belgien",
-          SE: "Sverige",
-          CN: "Kina",
-        };
-        const nice = map[loc] || loc;
-        return nice;
-      }
+        // Fyll huvudinfo
+        document.getElementById("res-tn").textContent =
+          data.trackingNumber || "-";
+        document.getElementById("res-client").textContent =
+          data.clientTrackerId || "-";
+        document.getElementById("res-status").textContent =
+          data.statusSwedish || data.statusMilestone || "-";
+        document.getElementById("res-postnord").textContent =
+          data.postnordNumber || "Inte tilldelat ännu";
+        document.getElementById("res-updated").textContent = formatDate(
+          data.lastUpdate
+        );
 
-      async function track() {
-        const tn = document.getElementById("tn").value.trim();
-        const box = document.getElementById("result");
-
-        if (!tn) {
-          box.innerHTML = "<p>❌ Ange ett spårningsnummer.</p>";
-          return;
+        const linkBox = document.getElementById("res-postnord-link");
+        if (data.postnordNumber) {
+          linkBox.innerHTML = `<a class="link" href="https://portal.postnord.com/tracking/details/${encodeURIComponent(
+            data.postnordNumber
+          )}" target="_blank" rel="noopener noreferrer">Öppna i PostNord</a>`;
+        } else {
+          linkBox.textContent =
+            "När PostNord-spårningsnumret har skapats kan du spåra i PostNords app.";
         }
 
-        box.innerHTML = "<p>⏳ Hämtar information...</p>";
+        // Händelser
+        const eventsEl = document.getElementById("events");
+        eventsEl.innerHTML = "";
+        (data.events || []).forEach((ev) => {
+          const div = document.createElement("div");
+          div.className = "event";
+          div.innerHTML = `
+            <div class="event-time">${formatDate(ev.datetime)}</div>
+            <div class="event-status">${ev.status || ""}</div>
+            <div class="event-location">${
+              ev.location ? ev.location : ""
+            }</div>`;
+          eventsEl.appendChild(div);
+        });
 
-        try {
-          const res = await fetch(API_URL + "?tn=" + encodeURIComponent(tn));
-          const data = await res.json();
-
-          if (!data.ok) {
-            box.innerHTML = "<p>❌ Kunde inte hämta spårning.</p>";
-            return;
-          }
-
-          let html = `<div class="result-box">`;
-
-          html += `<p><span class="label">Spårningsnummer:</span> ${data.trackingNumber}</p>`;
-          html += `<p><span class="label">Status:</span> ${
-            data.statusSwedish || "-"
-          }</p>`;
-
-          if (data.postnordNumber) {
-            html += `<p><span class="label">PostNord nr:</span> ${
-              data.postnordNumber
-            }<br>
-            <a href="https://portal.postnord.com/tracking/details/${
-              data.postnordNumber
-            }" target="_blank">Öppna i PostNord</a></p>`;
-          } else {
-            html += `<p><span class="label">PostNord nr:</span> Är ännu inte tilldelat.</p>`;
-          }
-
-          html += `<p><span class="label">Senast uppdaterad:</span> ${formatDate(
-            data.lastUpdate
-          )}</p>`;
-
-          // EVENTS – tidslinje
-          if (data.events && data.events.length > 0) {
-            html += `<h3>Händelser</h3>`;
-            html += `<ul class="timeline">`;
-
-           data.events.forEach((ev) => {
-  const main = ev.milestoneSwedish || "-";
-  const sub = ev.rawStatusSwedish || ev.rawStatus || "";
-  const loc = ev.location ? formatLocation(ev.location) : "";
-
-  html += `
-    <li>
-      <div class="event-time">${formatDate(ev.time)}</div>
-      <div class="event-status-main">${main}</div>
-      ${
-        sub
-          ? `<div class="event-status-sub">${sub}</div>`
-          : ""
+        resultBox.style.display = "block";
+      } catch (err) {
+        errorBox.textContent = err.message || "Något gick fel.";
+        errorBox.style.display = "block";
+      } finally {
+        btn.disabled = false;
       }
-      ${
-        loc
-          ? `<div class="event-location">${loc}</div>`
-          : ""
-      }
-    </li>`;
-});
+    });
+  </script>
+</body>
+</html>
