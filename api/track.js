@@ -36,7 +36,7 @@ function getClientIp(req) {
 }
 
 module.exports = async (req, res) => {
-  // CORS (för säkerhets skull, om du vill bädda in någon annanstans)
+  // CORS
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -55,7 +55,6 @@ module.exports = async (req, res) => {
     return;
   }
 
-  // trackingNumber kan heta tn eller value i query
   const trackingNumber =
     req.query.tn || req.query.value || req.query.trackingNumber;
 
@@ -173,7 +172,7 @@ module.exports = async (req, res) => {
       lastUpdate = latest.occurrenceDatetime || latest.datetime || null;
     }
 
-    // Förenklad lista med händelser
+    // Förenklad lista med händelser – med FLERA fältnamn
     const simplifiedEvents = events
       .slice()
       .sort((a, b) => {
@@ -181,11 +180,27 @@ module.exports = async (req, res) => {
         const db = new Date(b.occurrenceDatetime || b.datetime || 0).getTime();
         return db - da; // senaste först
       })
-      .map((ev) => ({
-        dateTime: ev.occurrenceDatetime || ev.datetime || null,
-        description: ev.status || "",
-        location: ev.location || "",
-      }));
+      .map((ev) => {
+        const dateTime = ev.occurrenceDatetime || ev.datetime || null;
+        const msg = ev.status || "";
+        const location = ev.location || "";
+
+        return {
+          // datum/tid (flera namn)
+          dateTime,
+          time: dateTime,
+          date: dateTime,
+
+          // text/meddelande (flera namn)
+          description: msg,
+          message: msg,
+          text: msg,
+          statusText: msg,
+
+          // plats
+          location,
+        };
+      });
 
     const result = {
       ok: true,
