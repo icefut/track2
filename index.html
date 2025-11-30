@@ -1,254 +1,211 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="sv">
   <head>
     <meta charset="utf-8" />
     <title>Spåra din beställning – Icefot</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+
     <style>
       body {
         margin: 0;
         padding: 0;
-        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-          sans-serif;
-        background: #ffffff;
+        font-family: Inter, Arial, sans-serif;
+        background: #f5f7fa;
       }
 
-      #icefot-track-wrapper {
-        max-width: 900px;
-        margin: 30px auto;
-        padding: 20px;
-        border-radius: 8px;
-        border: 1px solid #e2e2e2;
-        background: #fafafa;
+      .container {
+        max-width: 650px;
+        margin: 40px auto;
+        background: white;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.1);
       }
 
-      #icefot-track-wrapper h2 {
-        margin-top: 0;
-        margin-bottom: 10px;
-        font-size: 22px;
-      }
-
-      #icefot-track-wrapper p {
+      h1 {
         margin: 0 0 10px 0;
-        font-size: 14px;
+        font-size: 26px;
+        font-weight: 600;
+        color: #1a1a1a;
       }
 
-      #icefot-track-form {
+      p {
+        color: #555;
+        margin: 0 0 15px 0;
+        font-size: 15px;
+      }
+
+      .input-row {
         display: flex;
-        gap: 8px;
+        gap: 10px;
         margin-top: 10px;
-        margin-bottom: 15px;
       }
 
-      #icefot-track-input {
+      input {
         flex: 1;
-        padding: 10px;
-        border-radius: 4px;
-        border: 1px solid #ccc;
-        font-size: 14px;
+        padding: 12px;
+        border-radius: 6px;
+        border: 1px solid #d2d6dc;
+        font-size: 15px;
       }
 
-      #icefot-track-button {
-        padding: 10px 18px;
-        border-radius: 4px;
+      button {
+        padding: 12px 20px;
+        background: #2563eb;
+        color: white;
         border: none;
-        background: #000;
-        color: #fff;
-        font-size: 14px;
+        border-radius: 6px;
+        font-size: 15px;
         cursor: pointer;
-        white-space: nowrap;
+        transition: 0.2s;
       }
 
-      #icefot-track-button:disabled {
-        opacity: 0.7;
-        cursor: default;
+      button:hover {
+        background: #1e4fcc;
       }
 
-      #icefot-track-result {
-        font-size: 14px;
-        line-height: 1.5;
-        margin-top: 10px;
+      .result-box {
+        margin-top: 25px;
+        padding: 20px;
+        border-radius: 10px;
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
       }
 
-      #icefot-track-result h3 {
-        margin-top: 15px;
-        margin-bottom: 8px;
-        font-size: 16px;
+      .label {
+        font-weight: 600;
+        color: #1f2937;
       }
 
-      #icefot-events-list {
-        list-style: none;
+      .timeline {
+        margin-top: 20px;
         padding-left: 0;
-        margin: 0;
-        border-top: 1px solid #e2e2e2;
+        list-style: none;
       }
 
-      #icefot-events-list li {
-        padding: 6px 0;
-        border-bottom: 1px solid #f0f0f0;
+      .timeline li {
+        padding: 10px 0;
+        border-left: 3px solid #2563eb;
+        margin-left: 10px;
+        padding-left: 15px;
+        position: relative;
       }
 
-      #icefot-events-list small {
-        color: #666;
+      .timeline li::before {
+        content: "";
+        width: 12px;
+        height: 12px;
+        background: #2563eb;
+        border-radius: 50%;
+        position: absolute;
+        left: -7.5px;
+        top: 14px;
+      }
+
+      .event-time {
+        font-size: 13px;
+        color: #6b7280;
+      }
+
+      .event-status {
+        font-size: 15px;
+        font-weight: 500;
+        color: #111827;
       }
     </style>
   </head>
+
   <body>
-    <div id="icefot-track-wrapper">
-      <h2>Spåra din beställning</h2>
-      <p>
-        Skriv in ditt 4PX-spårningsnummer nedan för att se status på ditt paket.
-      </p>
+    <div class="container">
+      <h1>Spåra din beställning</h1>
+      <p>Skriv in ditt 4PX-spårningsnummer nedan för att följa ditt paket.</p>
 
-      <form id="icefot-track-form">
-        <input
-          id="icefot-track-input"
-          type="text"
-          placeholder="Till exempel: 4PX3002271569849CN"
-          required
-        />
-        <button id="icefot-track-button" type="submit">Spåra paket</button>
-      </form>
+      <div class="input-row">
+        <input id="tn" placeholder="Ex: 4PX3002244028809CN" />
+        <button onclick="track()">Spåra</button>
+      </div>
 
-      <div id="icefot-track-result"></div>
+      <div id="result"></div>
     </div>
 
     <script>
-      // URL till ditt API på Vercel
-      var icefotApiBase = "https://track2-three.vercel.app/api/track";
+      const API_URL = "https://track2-three.vercel.app/api/track";
 
-      function icefotFormatDateTime(dt) {
+      function formatDate(dt) {
         if (!dt) return "-";
         try {
-          var d = new Date(dt);
-          if (isNaN(d.getTime())) return dt;
-          return d.toLocaleString("sv-SE");
-        } catch (e) {
+          return new Date(dt).toLocaleString("sv-SE");
+        } catch {
           return dt;
         }
       }
 
-      (function () {
-        var form = document.getElementById("icefot-track-form");
-        var input = document.getElementById("icefot-track-input");
-        var button = document.getElementById("icefot-track-button");
-        var result = document.getElementById("icefot-track-result");
+      async function track() {
+        const tn = document.getElementById("tn").value.trim();
+        const box = document.getElementById("result");
 
-        if (!form || !input || !button || !result) return;
+        if (!tn) {
+          box.innerHTML = "<p>❌ Ange ett spårningsnummer.</p>";
+          return;
+        }
 
-        form.addEventListener("submit", function (e) {
-          e.preventDefault();
+        box.innerHTML = "<p>⏳ Hämtar information...</p>";
 
-          var tn = input.value.trim();
-          if (!tn) return;
+        try {
+          const res = await fetch(API_URL + "?tn=" + encodeURIComponent(tn));
+          const data = await res.json();
 
-          result.textContent = "Hämtar spårningsinformation...";
-          button.disabled = true;
+          if (!data.ok) {
+            box.innerHTML = "<p>❌ Kunde inte hämta spårning.</p>";
+            return;
+          }
 
-          fetch(icefotApiBase + "?tn=" + encodeURIComponent(tn))
-            .then(function (r) {
-              return r.json();
-            })
-            .then(function (data) {
-              button.disabled = false;
+          // Bygg HTML för resultatet
+          let html = `<div class="result-box">`;
 
-              if (!data || data.ok === false) {
-                var msg =
-                  "Kunde inte hämta spårning just nu. Kontrollera att spårnumret är korrekt.";
-                if (data && data.error) {
-                  msg += " (" + data.error + ")";
-                }
-                result.textContent = msg;
-                return;
-              }
+          html += `<p><span class="label">Spårningsnummer:</span> ${data.trackingNumber}</p>`;
 
-              var html = "";
+          html += `<p><span class="label">Status:</span> ${data.statusSwedish || "-"}</p>`;
 
-              // Spårningsnummer
-              html +=
-                "<p><strong>Spårningsnummer:</strong> " +
-                (data.trackingNumber || tn) +
-                "</p>";
+          if (data.postnordNumber) {
+            html += `<p><span class="label">PostNord nr:</span> ${data.postnordNumber} <br>
+            <a href="https://portal.postnord.com/tracking/details/${data.postnordNumber}" target="_blank">Öppna i PostNord</a></p>`;
+          } else {
+            html += `<p><span class="label">PostNord nr:</span> Ej tilldelat ännu</p>`;
+          }
 
-              // Bestäm status att visa
-              var displayStatus = data.statusSwedish || "";
+          html += `<p><span class="label">Senast uppdaterad:</span> ${formatDate(
+            data.lastUpdate
+          )}</p>`;
 
-              // Om statusSwedish är tom eller "Ingen spårningsinformation ännu"
-              // men vi har events – använd senaste eventet istället
-              var hasEvents = Array.isArray(data.events) && data.events.length > 0;
-              if (
-                hasEvents &&
-                (!displayStatus ||
-                  displayStatus === "Ingen spårningsinformation ännu")
-              ) {
-                var firstEvent = data.events[0]; // senaste händelse
-                if (firstEvent.milestoneSwedish) {
-                  displayStatus =
-                    firstEvent.milestoneSwedish + " (se händelser nedan)";
-                } else if (firstEvent.rawStatus) {
-                  displayStatus = firstEvent.rawStatus;
-                } else {
-                  displayStatus = "På väg (se händelser nedan)";
-                }
-              }
+          // EVENTS – tidslinje
+          if (data.events && data.events.length > 0) {
+            html += `<h3>Händelser</h3>`;
+            html += `<ul class="timeline">`;
 
-              if (!displayStatus) {
-                displayStatus = "Ingen spårningsinformation tillgänglig ännu.";
-              }
-
-              html +=
-                "<p><strong>Status:</strong> " +
-                displayStatus +
-                "</p>";
-
-              // PostNord-nummer
-              if (data.postnordNumber) {
-                html +=
-                  "<p><strong>PostNord-spårningsnummer:</strong> " +
-                  data.postnordNumber +
-                  "<br><a href='https://portal.postnord.com/tracking/details/" +
-                  data.postnordNumber +
-                  "' target='_blank' rel='noopener noreferrer'>Öppna spårning hos PostNord</a></p>";
-              } else {
-                html +=
-                  "<p><strong>PostNord-spårningsnummer:</strong> Är ännu inte tilldelat. När paketet har nått Sverige brukar ett PostNord-nummer skapas automatiskt.</p>";
-              }
-
-              // Senaste uppdatering
-              if (data.lastUpdate) {
-                html +=
-                  "<p><strong>Senast uppdaterad:</strong> " +
-                  icefotFormatDateTime(data.lastUpdate) +
-                  "</p>";
-              }
-
-              // Händelser
-              if (hasEvents) {
-                html += "<h3>Händelser</h3>";
-                html += "<ul id='icefot-events-list'>";
-                data.events.forEach(function (ev) {
-                  html +=
-                    "<li><small>" +
-                    (icefotFormatDateTime(ev.time) || "") +
-                    "</small><br>" +
-                    (ev.milestoneSwedish || ev.rawStatus || "") +
-                    "</li>";
-                });
-                html += "</ul>";
-              }
-
-              result.innerHTML = html;
-            })
-            .catch(function (err) {
-              console.error(err);
-              button.disabled = false;
-              result.textContent =
-                "Ett tekniskt fel uppstod när vi hämtade spårning.";
+            data.events.forEach((ev) => {
+              html += `
+                <li>
+                  <div class="event-time">${formatDate(ev.time)}</div>
+                  <div class="event-status">${
+                    ev.milestoneSwedish || ev.rawStatus
+                  }</div>
+                </li>`;
             });
 
-          return false;
-        });
-      })();
+            html += `</ul>`;
+          } else {
+            html += `<p>Inga händelser ännu.</p>`;
+          }
+
+          html += `</div>`;
+
+          box.innerHTML = html;
+        } catch (err) {
+          box.innerHTML =
+            "<p>❌ Tekniskt fel. Försök igen senare.</p>" + err.message;
+        }
+      }
     </script>
   </body>
 </html>
