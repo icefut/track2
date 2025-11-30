@@ -14,7 +14,7 @@
       }
 
       .container {
-        max-width: 650px;
+        max-width: 900px;
         margin: 40px auto;
         background: white;
         padding: 25px;
@@ -51,7 +51,7 @@
 
       button {
         padding: 12px 20px;
-        background: #2563eb;
+        background: #000;
         color: white;
         border: none;
         border-radius: 6px;
@@ -61,7 +61,7 @@
       }
 
       button:hover {
-        background: #1e4fcc;
+        background: #111827;
       }
 
       .result-box {
@@ -77,15 +77,21 @@
         color: #1f2937;
       }
 
+      h3 {
+        margin-top: 25px;
+        margin-bottom: 10px;
+        font-size: 18px;
+      }
+
       .timeline {
-        margin-top: 20px;
+        margin-top: 10px;
         padding-left: 0;
         list-style: none;
       }
 
       .timeline li {
         padding: 10px 0;
-        border-left: 3px solid #2563eb;
+        border-left: 3px solid #000;
         margin-left: 10px;
         padding-left: 15px;
         position: relative;
@@ -95,7 +101,7 @@
         content: "";
         width: 12px;
         height: 12px;
-        background: #2563eb;
+        background: #000;
         border-radius: 50%;
         position: absolute;
         left: -7.5px;
@@ -111,6 +117,13 @@
         font-size: 15px;
         font-weight: 500;
         color: #111827;
+        margin-top: 2px;
+      }
+
+      .event-location {
+        font-size: 13px;
+        color: #374151;
+        margin-top: 2px;
       }
     </style>
   </head>
@@ -118,11 +131,11 @@
   <body>
     <div class="container">
       <h1>Spåra din beställning</h1>
-      <p>Skriv in ditt 4PX-spårningsnummer nedan för att följa ditt paket.</p>
+      <p>Skriv in ditt 4PX-spårningsnummer nedan för att se status på ditt paket.</p>
 
       <div class="input-row">
         <input id="tn" placeholder="Ex: 4PX3002244028809CN" />
-        <button onclick="track()">Spåra</button>
+        <button onclick="track()">Spåra paket</button>
       </div>
 
       <div id="result"></div>
@@ -160,18 +173,22 @@
             return;
           }
 
-          // Bygg HTML för resultatet
           let html = `<div class="result-box">`;
 
           html += `<p><span class="label">Spårningsnummer:</span> ${data.trackingNumber}</p>`;
-
-          html += `<p><span class="label">Status:</span> ${data.statusSwedish || "-"}</p>`;
+          html += `<p><span class="label">Status:</span> ${
+            data.statusSwedish || "-"
+          }</p>`;
 
           if (data.postnordNumber) {
-            html += `<p><span class="label">PostNord nr:</span> ${data.postnordNumber} <br>
-            <a href="https://portal.postnord.com/tracking/details/${data.postnordNumber}" target="_blank">Öppna i PostNord</a></p>`;
+            html += `<p><span class="label">PostNord-spårningsnummer:</span> ${
+              data.postnordNumber
+            }<br>
+            <a href="https://portal.postnord.com/tracking/details/${
+              data.postnordNumber
+            }" target="_blank">Öppna spårning hos PostNord</a></p>`;
           } else {
-            html += `<p><span class="label">PostNord nr:</span> Ej tilldelat ännu</p>`;
+            html += `<p><span class="label">PostNord-spårningsnummer:</span> Är ännu inte tilldelat.</p>`;
           }
 
           html += `<p><span class="label">Senast uppdaterad:</span> ${formatDate(
@@ -188,8 +205,13 @@
                 <li>
                   <div class="event-time">${formatDate(ev.time)}</div>
                   <div class="event-status">${
-                    ev.milestoneSwedish || ev.rawStatus
+                    ev.rawStatus || ev.milestoneSwedish || "-"
                   }</div>
+                  ${
+                    ev.location
+                      ? `<div class="event-location">${ev.location}</div>`
+                      : ""
+                  }
                 </li>`;
             });
 
@@ -199,7 +221,6 @@
           }
 
           html += `</div>`;
-
           box.innerHTML = html;
         } catch (err) {
           box.innerHTML =
