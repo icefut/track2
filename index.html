@@ -217,40 +217,24 @@
             html += `<h3>Händelser</h3>`;
             html += `<ul class="timeline">`;
 
-            data.events.forEach((ev) => {
-              const main = ev.milestoneSwedish || "-";
-              const sub = ev.rawStatus || "";
-              const loc = ev.location ? formatLocation(ev.location) : "";
+           data.events.forEach((ev) => {
+  const main = ev.milestoneSwedish || "-";
+  const sub = ev.rawStatusSwedish || ev.rawStatus || "";
+  const loc = ev.location ? formatLocation(ev.location) : "";
 
-              html += `
-                <li>
-                  <div class="event-time">${formatDate(ev.time)}</div>
-                  <div class="event-status-main">${main}</div>
-                  ${
-                    sub
-                      ? `<div class="event-status-sub">${sub}</div>`
-                      : ""
-                  }
-                  ${
-                    loc
-                      ? `<div class="event-location">${loc}</div>`
-                      : ""
-                  }
-                </li>`;
-            });
-
-            html += `</ul>`;
-          } else {
-            html += `<p>Inga händelser ännu.</p>`;
-          }
-
-          html += `</div>`;
-          box.innerHTML = html;
-        } catch (err) {
-          box.innerHTML =
-            "<p>❌ Tekniskt fel. Försök igen senare.</p>" + err.message;
-        }
+  html += `
+    <li>
+      <div class="event-time">${formatDate(ev.time)}</div>
+      <div class="event-status-main">${main}</div>
+      ${
+        sub
+          ? `<div class="event-status-sub">${sub}</div>`
+          : ""
       }
-    </script>
-  </body>
-</html>
+      ${
+        loc
+          ? `<div class="event-location">${loc}</div>`
+          : ""
+      }
+    </li>`;
+});
