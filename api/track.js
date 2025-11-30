@@ -6,7 +6,7 @@ const https = require("https");
 const SHIP24_HOST = "api.ship24.com";
 const SHIP24_PATH = "/public/v1/trackers/track";
 
-// Översätt Ship24s statusMilestone till svenska
+// Översätt Ship24s statusMilestone till svenska (grov nivå)
 function mapStatusToSwedish(milestone) {
   switch (milestone) {
     case "info_received":
@@ -28,6 +28,67 @@ function mapStatusToSwedish(milestone) {
     default:
       return "Okänt status";
   }
+}
+
+// Mer detaljerad översättning av den engelska status-texten (rawStatus)
+function mapRawStatusToSwedish(status) {
+  if (!status) return null;
+  const s = status.toLowerCase();
+
+  if (s.includes("delivered to the recipient's mailbox")) {
+    return "Försändelsen har levererats till mottagarens brevlåda.";
+  }
+  if (s.includes("has been delivered to the recipients mailbox")) {
+    return "Försändelsen har levererats till mottagarens brevlåda.";
+  }
+  if (s.includes("the shipment item has been loaded")) {
+    return "Försändelsen har lastats.";
+  }
+  if (s.includes("is being processed at our sorting center")) {
+    return "Försändelsen hanteras på vår sorteringsterminal.";
+  }
+  if (s.includes("is under transportation")) {
+    return "Försändelsen är under transport.";
+  }
+  if (s.includes("has been handed over to a partner for transportation to the final destination")) {
+    return "Försändelsen har överlämnats till en partner för vidare transport till slutdestinationen.";
+  }
+  if (s.includes("shipment picked up")) {
+    return "Försändelsen har hämtats upp.";
+  }
+  if (s.includes("shipping information received")) {
+    return "Fraktinformation har mottagits.";
+  }
+  if (s.includes("parcel information received")) {
+    return "Paketinformation mottagen.";
+  }
+  if (s.includes("depart from facility to service provider")) {
+    return "Försändelsen har lämnat anläggningen till transportör.";
+  }
+  if (s.includes("arrival to the destination airport")) {
+    return "Ankomst till destinationsflygplats.";
+  }
+  if (s.includes("departure from the original airport")) {
+    return "Avgång från ursprungsflygplats.";
+  }
+  if (s.includes("released from customs")) {
+    return "Tullklarerad.";
+  }
+  if (s.includes("arrive in transit center")) {
+    return "Ankomst till terminal.";
+  }
+  if (s.includes("parcel outbound from transit center")) {
+    return "Försändelsen har lämnat terminalen.";
+  }
+  if (
+    s.includes("we have received a notification from your shipper") &&
+    s.includes("will be updated when the parcel is handed over to postnord")
+  ) {
+    return "Vi har fått information från avsändaren att en försändelse förbereds. Spårningen uppdateras när paketet har lämnats över till PostNord.";
+  }
+
+  // om vi inte känner igen texten -> null (frontend visar engelskan)
+  return null;
 }
 
 // hitta PostNord-nummer: UJ... eller 003...
@@ -111,7 +172,7 @@ module.exports = async (req, res) => {
       });
     }
 
-    // -------- Plocka ut data ur rawShip24 (baserat på ditt svar) --------
+    // -------- Plocka ut data ur rawShip24 --------
     const data = body && body.data ? body.data : null;
     if (!data || !Array.isArray(data.trackings) || !data.trackings.length) {
       return res.status(200).json({
@@ -138,7 +199,9 @@ module.exports = async (req, res) => {
 
     // senaste uppdatering = första eventet (Ship24 skickar senaste först)
     const lastEvent = events.length ? events[0] : null;
-    const lastUpdate = lastEvent ? lastEvent.occurrenceDatetime || lastEvent.datetime : null;
+    const lastUpdate = lastEvent
+      ? lastEvent.occurrenceDatetime || lastEvent.datetime
+      : null;
 
     // hitta PostNord-nummer
     let postnordNumber = null;
@@ -176,14 +239,20 @@ module.exports = async (req, res) => {
       }
     }
 
-    // bygg events-array för frontend
-    const mappedEvents = events.map((ev) => ({
-      time: ev.occurrenceDatetime || ev.datetime || null,
-      rawStatus: ev.status || "",
-      location: ev.location || null,
-      milestone: ev.statusMilestone || null,
-      milestoneSwedish: mapStatusToSwedish(ev.statusMilestone),
-    }));
+    // Bygg events-array för frontend
+    const mappedEvents = events.map((ev) => {
+      const raw = ev.status || "";
+      const translated = mapRawStatusToSwedish(raw);
+
+      return {
+        time: ev.occurrenceDatetime || ev.datetime || null,
+        rawStatus: raw,
+        rawStatusSwedish: translated,
+        location: ev.location || null,
+        milestone: ev.statusMilestone || null,
+        milestoneSwedish: mapStatusToSwedish(ev.statusMilestone),
+      };
+    });
 
     return res.status(200).json({
       ok: true,
