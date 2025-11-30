@@ -27,6 +27,8 @@
       margin:0 0 16px;
       color:#4b5563;
     }
+
+    /* "Tabs"-bar, men nu bara en knapp som ser likadan ut */
     .tabs {
       display:flex;
       margin-bottom:16px;
@@ -39,17 +41,14 @@
       text-align:center;
       padding:8px 12px;
       font-size:14px;
-      cursor:pointer;
+      cursor:default;
       border-radius:999px;
       border:none;
-      background:transparent;
-      transition:background .15s, color .15s;
-    }
-    .tab.active {
       background:#2563eb;
       color:#fff;
       font-weight:600;
     }
+
     .row {
       display:flex;
       gap:8px;
@@ -142,16 +141,13 @@
 <body>
   <div class="container">
     <h1>Spåra din beställning</h1>
-    <p>Skriv in ditt 4PX-spårningsnummer eller ordernummer nedan för att se status på ditt paket.</p>
+    <p>Skriv in ditt 4PX-spårningsnummer nedan för att se status på ditt paket. Du hittar numret i din orderbekräftelse (börjar nästan alltid med 4PX och slutar med CN).</p>
 
     <div class="tabs">
-      <button class="tab active" id="tab-tracking">Spårningsnummer</button>
-      <button class="tab" id="tab-order">Ordernummer</button>
+      <button class="tab">Spårningsnummer</button>
     </div>
 
     <form id="track-form">
-      <input type="hidden" id="mode" value="tracking" />
-
       <div class="row">
         <input
           type="text"
@@ -168,7 +164,6 @@
     <div id="result" style="display:none;">
       <div class="status-box">
         <div><strong>Spårningsnummer:</strong> <span id="res-tn"></span></div>
-        <div><strong>Order/Client ID:</strong> <span id="res-client"></span></div>
         <div><strong>Status:</strong> <span id="res-status"></span></div>
         <div><strong>PostNord nr:</strong> <span id="res-postnord"></span></div>
         <div><strong>Senast uppdaterad:</strong> <span id="res-updated"></span></div>
@@ -181,33 +176,11 @@
   </div>
 
   <script>
-    const tabTracking = document.getElementById("tab-tracking");
-    const tabOrder = document.getElementById("tab-order");
-    const modeInput = document.getElementById("mode");
     const input = document.getElementById("input");
     const form = document.getElementById("track-form");
     const btn = document.getElementById("submit-btn");
     const errorBox = document.getElementById("error");
     const resultBox = document.getElementById("result");
-
-    function setMode(mode) {
-      modeInput.value = mode;
-      if (mode === "tracking") {
-        tabTracking.classList.add("active");
-        tabOrder.classList.remove("active");
-        input.placeholder = "4PX-nummer, t.ex. 4PX3002...";
-      } else {
-        tabOrder.classList.add("active");
-        tabTracking.classList.remove("active");
-        input.placeholder = "Ordernummer, t.ex. 12345";
-      }
-      input.value = "";
-      resultBox.style.display = "none";
-      errorBox.style.display = "none";
-    }
-
-    tabTracking.addEventListener("click", () => setMode("tracking"));
-    tabOrder.addEventListener("click", () => setMode("order"));
 
     function formatDate(dt) {
       if (!dt) return "";
@@ -216,11 +189,68 @@
       return d.toLocaleString("sv-SE");
     }
 
+    // Försök översätta Ship24-eventtexter till svenska
+    function translateEventStatus(status) {
+      if (!status) return "";
+      const s = status.toLowerCase();
+
+      if (s.includes("delivered to the recipient's mailbox") ||
+          s.includes("delivered to the recipients mailbox")) {
+        return "Försändelsen har levererats till mottagarens brevlåda.";
+      }
+      if (s.includes("has been loaded")) {
+        return "Försändelsen har lastats.";
+      }
+      if (s.includes("is being processed at our sorting center")) {
+        return "Försändelsen hanteras på vår sorteringsterminal.";
+      }
+      if (s.includes("is under transportation")) {
+        return "Försändelsen är under transport.";
+      }
+      if (s.includes("has been handed over to a partner for transportation to the final destination")) {
+        return "Försändelsen har överlämnats till en partner för vidare transport till slutdestinationen.";
+      }
+      if (s.includes("shipping information received")) {
+        return "Fraktinformation har mottagits.";
+      }
+      if (s.includes("parcel information received")) {
+        return "Paketinformation har mottagits.";
+      }
+      if (s.includes("we have received a notification from your shipper")) {
+        return "Vi har fått information från avsändaren om att en försändelse förbereds åt dig.";
+      }
+      if (s.includes("shipment picked up")) {
+        return "Försändelsen har hämtats upp.";
+      }
+      if (s.includes("shipment arrived at facility and measured")) {
+        return "Försändelsen har ankommit till terminal och hanteras.";
+      }
+      if (s.includes("depart from facility to service provider")) {
+        return "Försändelsen har lämnat terminalen för vidare transport.";
+      }
+      if (s.includes("arrival to the destination airport")) {
+        return "Försändelsen har ankommit till destinationsflygplats.";
+      }
+      if (s.includes("departure from the original airport")) {
+        return "Försändelsen har lämnat ursprungsflygplatsen.";
+      }
+      if (s.includes("released from customs: customs cleared")) {
+        return "Försändelsen har klarerats i tullen.";
+      }
+      if (s.includes("arrive in transit center")) {
+        return "Försändelsen har ankommit till omlastningscentral.";
+      }
+      if (s.includes("parcel outbound from transit center")) {
+        return "Försändelsen har lämnat omlastningscentral.";
+      }
+
+      // Om vi inte känner igen texten: visa originalet
+      return "";
+    }
+
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       const value = input.value.trim();
-      const mode = modeInput.value;
-
       if (!value) return;
 
       errorBox.style.display = "none";
@@ -230,7 +260,7 @@
       try {
         const url = `/api/track?value=${encodeURIComponent(
           value
-        )}&mode=${encodeURIComponent(mode)}`;
+        )}&mode=tracking`;
 
         const res = await fetch(url);
         const data = await res.json();
@@ -241,11 +271,9 @@
           );
         }
 
-        // Fyll huvudinfo
+        // Huvudinfo
         document.getElementById("res-tn").textContent =
           data.trackingNumber || "-";
-        document.getElementById("res-client").textContent =
-          data.clientTrackerId || "-";
         document.getElementById("res-status").textContent =
           data.statusSwedish || data.statusMilestone || "-";
         document.getElementById("res-postnord").textContent =
@@ -268,14 +296,16 @@
         const eventsEl = document.getElementById("events");
         eventsEl.innerHTML = "";
         (data.events || []).forEach((ev) => {
+          const original = ev.status || "";
+          const translated = translateEventStatus(original);
+          const text = translated || original;
+
           const div = document.createElement("div");
           div.className = "event";
           div.innerHTML = `
             <div class="event-time">${formatDate(ev.datetime)}</div>
-            <div class="event-status">${ev.status || ""}</div>
-            <div class="event-location">${
-              ev.location ? ev.location : ""
-            }</div>`;
+            <div class="event-status">${text}</div>
+            <div class="event-location">${ev.location || ""}</div>`;
           eventsEl.appendChild(div);
         });
 
