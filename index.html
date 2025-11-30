@@ -51,7 +51,7 @@
 
       button {
         padding: 12px 20px;
-        background: #000;
+        background: #2563eb;
         color: white;
         border: none;
         border-radius: 6px;
@@ -61,7 +61,7 @@
       }
 
       button:hover {
-        background: #111827;
+        background: #1d4ed8;
       }
 
       .result-box {
@@ -91,7 +91,7 @@
 
       .timeline li {
         padding: 10px 0;
-        border-left: 3px solid #000;
+        border-left: 3px solid #2563eb;
         margin-left: 10px;
         padding-left: 15px;
         position: relative;
@@ -101,7 +101,7 @@
         content: "";
         width: 12px;
         height: 12px;
-        background: #000;
+        background: #2563eb;
         border-radius: 50%;
         position: absolute;
         left: -7.5px;
@@ -113,16 +113,22 @@
         color: #6b7280;
       }
 
-      .event-status {
+      .event-status-main {
         font-size: 15px;
-        font-weight: 500;
+        font-weight: 600;
         color: #111827;
+        margin-top: 2px;
+      }
+
+      .event-status-sub {
+        font-size: 14px;
+        color: #374151;
         margin-top: 2px;
       }
 
       .event-location {
         font-size: 13px;
-        color: #374151;
+        color: #4b5563;
         margin-top: 2px;
       }
     </style>
@@ -135,7 +141,7 @@
 
       <div class="input-row">
         <input id="tn" placeholder="Ex: 4PX3002244028809CN" />
-        <button onclick="track()">Spåra paket</button>
+        <button onclick="track()">Spåra</button>
       </div>
 
       <div id="result"></div>
@@ -151,6 +157,17 @@
         } catch {
           return dt;
         }
+      }
+
+      function formatLocation(loc) {
+        if (!loc) return "";
+        const map = {
+          BE: "Belgien",
+          SE: "Sverige",
+          CN: "Kina",
+        };
+        const nice = map[loc] || loc;
+        return nice;
       }
 
       async function track() {
@@ -181,14 +198,14 @@
           }</p>`;
 
           if (data.postnordNumber) {
-            html += `<p><span class="label">PostNord-spårningsnummer:</span> ${
+            html += `<p><span class="label">PostNord nr:</span> ${
               data.postnordNumber
             }<br>
             <a href="https://portal.postnord.com/tracking/details/${
               data.postnordNumber
-            }" target="_blank">Öppna spårning hos PostNord</a></p>`;
+            }" target="_blank">Öppna i PostNord</a></p>`;
           } else {
-            html += `<p><span class="label">PostNord-spårningsnummer:</span> Är ännu inte tilldelat.</p>`;
+            html += `<p><span class="label">PostNord nr:</span> Är ännu inte tilldelat.</p>`;
           }
 
           html += `<p><span class="label">Senast uppdaterad:</span> ${formatDate(
@@ -201,15 +218,22 @@
             html += `<ul class="timeline">`;
 
             data.events.forEach((ev) => {
+              const main = ev.milestoneSwedish || "-";
+              const sub = ev.rawStatus || "";
+              const loc = ev.location ? formatLocation(ev.location) : "";
+
               html += `
                 <li>
                   <div class="event-time">${formatDate(ev.time)}</div>
-                  <div class="event-status">${
-                    ev.rawStatus || ev.milestoneSwedish || "-"
-                  }</div>
+                  <div class="event-status-main">${main}</div>
                   ${
-                    ev.location
-                      ? `<div class="event-location">${ev.location}</div>`
+                    sub
+                      ? `<div class="event-status-sub">${sub}</div>`
+                      : ""
+                  }
+                  ${
+                    loc
+                      ? `<div class="event-location">${loc}</div>`
                       : ""
                   }
                 </li>`;
