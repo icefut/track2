@@ -317,6 +317,24 @@
         btn.disabled = false;
       }
     });
+
+    // Auto-spårning om det finns ?tn= i URL:en
+    (function () {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const tn =
+          params.get("tn") ||
+          params.get("trackingNumber") ||
+          params.get("value");
+
+        if (tn) {
+          input.value = tn;
+          form.dispatchEvent(new Event("submit", { cancelable: true, bubbles: true }));
+        }
+      } catch (e) {
+        console.error("Kunde inte läsa tn från URL:", e);
+      }
+    })();
   </script>
 </body>
 </html>
