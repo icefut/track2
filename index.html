@@ -176,165 +176,176 @@
   </div>
 
   <script>
-    const input = document.getElementById("input");
-    const form = document.getElementById("track-form");
-    const btn = document.getElementById("submit-btn");
-    const errorBox = document.getElementById("error");
-    const resultBox = document.getElementById("result");
+  const input = document.getElementById("input");
+  const form = document.getElementById("track-form");
+  const btn = document.getElementById("submit-btn");
+  const errorBox = document.getElementById("error");
+  const resultBox = document.getElementById("result");
 
-    function formatDate(dt) {
-      if (!dt) return "";
-      const d = new Date(dt);
-      if (isNaN(d.getTime())) return dt;
-      return d.toLocaleString("sv-SE");
+  function formatDate(dt) {
+    if (!dt) return "";
+    const d = new Date(dt);
+    if (isNaN(d.getTime())) return dt;
+    return d.toLocaleString("sv-SE");
+  }
+
+  // Försök översätta Ship24-eventtexter till svenska
+  function translateEventStatus(status) {
+    if (!status) return "";
+    const s = status.toLowerCase();
+
+    if (
+      s.includes("delivered to the recipient's mailbox") ||
+      s.includes("delivered to the recipients mailbox")
+    ) {
+      return "Försändelsen har levererats till mottagarens brevlåda.";
+    }
+    if (s.includes("has been loaded")) {
+      return "Försändelsen har lastats.";
+    }
+    if (s.includes("is being processed at our sorting center")) {
+      return "Försändelsen hanteras på vår sorteringsterminal.";
+    }
+    if (s.includes("is under transportation")) {
+      return "Försändelsen är under transport.";
+    }
+    if (
+      s.includes(
+        "has been handed over to a partner for transportation to the final destination"
+      )
+    ) {
+      return "Försändelsen har överlämnats till en partner för vidare transport till slutdestinationen.";
+    }
+    if (s.includes("shipping information received")) {
+      return "Fraktinformation har mottagits.";
+    }
+    if (s.includes("parcel information received")) {
+      return "Paketinformation har mottagits.";
+    }
+    if (s.includes("we have received a notification from your shipper")) {
+      return "Vi har fått information från avsändaren om att en försändelse förbereds åt dig.";
+    }
+    if (s.includes("shipment picked up")) {
+      return "Försändelsen har hämtats upp.";
+    }
+    if (s.includes("shipment arrived at facility and measured")) {
+      return "Försändelsen har ankommit till terminal och hanteras.";
+    }
+    if (s.includes("depart from facility to service provider")) {
+      return "Försändelsen har lämnat terminalen för vidare transport.";
+    }
+    if (s.includes("arrival to the destination airport")) {
+      return "Försändelsen har ankommit till destinationsflygplats.";
+    }
+    if (s.includes("departure from the original airport")) {
+      return "Försändelsen har lämnat ursprungsflygplatsen.";
+    }
+    if (s.includes("released from customs: customs cleared")) {
+      return "Försändelsen har klarerats i tullen.";
+    }
+    if (s.includes("arrive in transit center")) {
+      return "Försändelsen har ankommit till omlastningscentral.";
+    }
+    if (s.includes("parcel outbound from transit center")) {
+      return "Försändelsen har lämnat omlastningscentral.";
     }
 
-    // Försök översätta Ship24-eventtexter till svenska
-    function translateEventStatus(status) {
-      if (!status) return "";
-      const s = status.toLowerCase();
+    // Okänd text → visa originalet senare
+    return "";
+  }
 
-      if (s.includes("delivered to the recipient's mailbox") ||
-          s.includes("delivered to the recipients mailbox")) {
-        return "Försändelsen har levererats till mottagarens brevlåda.";
-      }
-      if (s.includes("has been loaded")) {
-        return "Försändelsen har lastats.";
-      }
-      if (s.includes("is being processed at our sorting center")) {
-        return "Försändelsen hanteras på vår sorteringsterminal.";
-      }
-      if (s.includes("is under transportation")) {
-        return "Försändelsen är under transport.";
-      }
-      if (s.includes("has been handed over to a partner for transportation to the final destination")) {
-        return "Försändelsen har överlämnats till en partner för vidare transport till slutdestinationen.";
-      }
-      if (s.includes("shipping information received")) {
-        return "Fraktinformation har mottagits.";
-      }
-      if (s.includes("parcel information received")) {
-        return "Paketinformation har mottagits.";
-      }
-      if (s.includes("we have received a notification from your shipper")) {
-        return "Vi har fått information från avsändaren om att en försändelse förbereds åt dig.";
-      }
-      if (s.includes("shipment picked up")) {
-        return "Försändelsen har hämtats upp.";
-      }
-      if (s.includes("shipment arrived at facility and measured")) {
-        return "Försändelsen har ankommit till terminal och hanteras.";
-      }
-      if (s.includes("depart from facility to service provider")) {
-        return "Försändelsen har lämnat terminalen för vidare transport.";
-      }
-      if (s.includes("arrival to the destination airport")) {
-        return "Försändelsen har ankommit till destinationsflygplats.";
-      }
-      if (s.includes("departure from the original airport")) {
-        return "Försändelsen har lämnat ursprungsflygplatsen.";
-      }
-      if (s.includes("released from customs: customs cleared")) {
-        return "Försändelsen har klarerats i tullen.";
-      }
-      if (s.includes("arrive in transit center")) {
-        return "Försändelsen har ankommit till omlastningscentral.";
-      }
-      if (s.includes("parcel outbound from transit center")) {
-        return "Försändelsen har lämnat omlastningscentral.";
-      }
+  function updateUrlWithTrackingNumber(value) {
+    const newUrl =
+      window.location.pathname + "?tn=" + encodeURIComponent(value);
+    window.history.replaceState(null, "", newUrl);
+  }
 
-      // Om vi inte känner igen texten: visa originalet
-      return "";
+  async function runTracking(value, opts = { updateUrl: true }) {
+    const tn = (value || "").trim();
+    if (!tn) return;
+
+    if (opts.updateUrl) {
+      updateUrlWithTrackingNumber(tn);
     }
 
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const value = input.value.trim();
-      if (!value) return;
+    errorBox.style.display = "none";
+    resultBox.style.display = "none";
+    btn.disabled = true;
 
-      errorBox.style.display = "none";
-      resultBox.style.display = "none";
-      btn.disabled = true;
+    try {
+      const url = `/api/track?value=${encodeURIComponent(tn)}&mode=tracking`;
+      const res = await fetch(url);
+      const data = await res.json();
 
-      try {
-        const url = `/api/track?value=${encodeURIComponent(
-          value
-        )}&mode=tracking`;
-
-        const res = await fetch(url);
-        const data = await res.json();
-
-        if (!data.ok) {
-          throw new Error(
-            data.error || "Kunde inte hitta någon försändelse. Kontrollera numret."
-          );
-        }
-
-        // Huvudinfo
-        document.getElementById("res-tn").textContent =
-          data.trackingNumber || "-";
-        document.getElementById("res-status").textContent =
-          data.statusSwedish || data.statusMilestone || "-";
-        document.getElementById("res-postnord").textContent =
-          data.postnordNumber || "Inte tilldelat ännu";
-        document.getElementById("res-updated").textContent = formatDate(
-          data.lastUpdate
+      if (!data.ok) {
+        throw new Error(
+          data.error || "Kunde inte hitta någon försändelse. Kontrollera numret."
         );
-
-        const linkBox = document.getElementById("res-postnord-link");
-        if (data.postnordNumber) {
-          linkBox.innerHTML = `<a class="link" href="https://portal.postnord.com/tracking/details/${encodeURIComponent(
-            data.postnordNumber
-          )}" target="_blank" rel="noopener noreferrer">Öppna i PostNord</a>`;
-        } else {
-          linkBox.textContent =
-            "När PostNord-spårningsnumret har skapats kan du spåra i PostNords app.";
-        }
-
-        // Händelser
-        const eventsEl = document.getElementById("events");
-        eventsEl.innerHTML = "";
-        (data.events || []).forEach((ev) => {
-          const original = ev.status || "";
-          const translated = translateEventStatus(original);
-          const text = translated || original;
-
-          const div = document.createElement("div");
-          div.className = "event";
-          div.innerHTML = `
-            <div class="event-time">${formatDate(ev.datetime)}</div>
-            <div class="event-status">${text}</div>
-            <div class="event-location">${ev.location || ""}</div>`;
-          eventsEl.appendChild(div);
-        });
-
-        resultBox.style.display = "block";
-      } catch (err) {
-        errorBox.textContent = err.message || "Något gick fel.";
-        errorBox.style.display = "block";
-      } finally {
-        btn.disabled = false;
       }
-    });
 
-    // Auto-spårning om det finns ?tn= i URL:en
-    (function () {
-      try {
-        const params = new URLSearchParams(window.location.search);
-        const tn =
-          params.get("tn") ||
-          params.get("trackingNumber") ||
-          params.get("value");
+      // Huvudinfo
+      document.getElementById("res-tn").textContent =
+        data.trackingNumber || "-";
+      document.getElementById("res-status").textContent =
+        data.statusSwedish || data.statusMilestone || "-";
+      document.getElementById("res-postnord").textContent =
+        data.postnordNumber || "Inte tilldelat ännu";
+      document.getElementById("res-updated").textContent = formatDate(
+        data.lastUpdate
+      );
 
-        if (tn) {
-          input.value = tn;
-          form.dispatchEvent(new Event("submit", { cancelable: true, bubbles: true }));
-        }
-      } catch (e) {
-        console.error("Kunde inte läsa tn från URL:", e);
+      const linkBox = document.getElementById("res-postnord-link");
+      if (data.postnordNumber) {
+        linkBox.innerHTML = `<a class="link" href="https://portal.postnord.com/tracking/details/${encodeURIComponent(
+          data.postnordNumber
+        )}" target="_blank" rel="noopener noreferrer">Öppna i PostNord</a>`;
+      } else {
+        linkBox.textContent =
+          "När PostNord-spårningsnumret har skapats kan du spåra i PostNords app.";
       }
-    })();
-  </script>
-</body>
-</html>
+
+      // Händelser
+      const eventsEl = document.getElementById("events");
+      eventsEl.innerHTML = "";
+      (data.events || []).forEach((ev) => {
+        const original = ev.status || "";
+        const translated = translateEventStatus(original);
+        const text = translated || original;
+
+        const div = document.createElement("div");
+        div.className = "event";
+        div.innerHTML = `
+          <div class="event-time">${formatDate(ev.datetime)}</div>
+          <div class="event-status">${text}</div>
+          <div class="event-location">${ev.location || ""}</div>`;
+        eventsEl.appendChild(div);
+      });
+
+      resultBox.style.display = "block";
+    } catch (err) {
+      errorBox.textContent = err.message || "Något gick fel.";
+      errorBox.style.display = "block";
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  // När man trycker på "Spåra"
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const value = input.value.trim();
+    runTracking(value, { updateUrl: true });
+  });
+
+  // När sidan laddas med ?tn=...
+  window.addEventListener("DOMContentLoaded", () => {
+    const params = new URLSearchParams(window.location.search);
+    const tn = params.get("tn");
+    if (tn) {
+      input.value = tn;
+      // Vi uppdaterar INTE URL igen här, den är redan rätt
+      runTracking(tn, { updateUrl: false });
+    }
+  });
+</script>
+
