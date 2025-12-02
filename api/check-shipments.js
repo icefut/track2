@@ -16,7 +16,8 @@ module.exports = async function handler(req, res) {
   const TRACK_URL_BASE = process.env.TRACK_URL_BASE;
 
   // 1. Hämta alla ordrar
-   const { data: orders, error } = await supabase.from("orders").select("*");
+const { data: orders, error } = await supabase.from("Orders").select("*");
+
 
   if (error) {
     console.error("Supabase error:", error);
