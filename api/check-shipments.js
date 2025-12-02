@@ -1,7 +1,7 @@
-import { Resend } from "resend";
-import { createClient } from "@supabase/supabase-js";
+const { Resend } = require("resend");
+const { createClient } = require("@supabase/supabase-js");
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   if (req.method !== "GET") {
     return res.status(405).json({ error: "Method not allowed" });
   }
@@ -28,7 +28,10 @@ export default async function handler(req, res) {
   for (const order of orders || []) {
     if (!order.tracking_number || !order.email) continue;
 
-    const currentStatus = await getShip24Status(order.tracking_number, SHIP24_API_KEY);
+    const currentStatus = await getShip24Status(
+      order.tracking_number,
+      SHIP24_API_KEY
+    );
     if (!currentStatus) continue;
 
     const emailType = mapStatusToEmailType(currentStatus);
@@ -56,8 +59,8 @@ export default async function handler(req, res) {
     }
   }
 
-  res.status(200).json({ ok: true, sentCount });
-}
+  return res.status(200).json({ ok: true, sentCount });
+};
 
 async function getShip24Status(trackingNumber, apiKey) {
   const res = await fetch(
@@ -88,13 +91,21 @@ async function getShip24Status(trackingNumber, apiKey) {
 function mapStatusToEmailType(status) {
   const s = status.toLowerCase();
   if (s.includes("delivered")) return "delivered";
-  if (s.includes("pickup") || s.includes("out_for_delivery")) return "pickup_ready";
+  if (s.includes("pickup") || s.includes("out_for_delivery"))
+    return "pickup_ready";
   if (s.includes("in_transit") || s.includes("transit")) return "in_transit";
   if (s.includes("created")) return "tracking_created";
   return null;
 }
 
-async function sendStatusEmail({ resend, to, name, trackingNumber, emailType, trackUrl }) {
+async function sendStatusEmail({
+  resend,
+  to,
+  name,
+  trackingNumber,
+  emailType,
+  trackUrl,
+}) {
   const link = `${trackUrl}${encodeURIComponent(trackingNumber)}`;
 
   let subject = "";
@@ -106,6 +117,7 @@ async function sendStatusEmail({ resend, to, name, trackingNumber, emailType, tr
       <p>Hej ${name || ""},</p>
       <p>Ditt paket har fått ett spårningsnummer: <b>${trackingNumber}</b>.</p>
       <p>Spåra din beställning: <a href="${link}">${link}</a></p>
+      <p>Vänliga hälsningar<br/>Icefot</p>
     `;
   } else if (emailType === "in_transit") {
     subject = "Ditt paket är på väg";
@@ -113,21 +125,25 @@ async function sendStatusEmail({ resend, to, name, trackingNumber, emailType, tr
       <p>Hej ${name || ""},</p>
       <p>Ditt paket är nu på väg.</p>
       <p>Spåra här: <a href="${link}">${link}</a></p>
+      <p>Vänliga hälsningar<br/>Icefot</p>
     `;
   } else if (emailType === "pickup_ready") {
     subject = "Ditt paket finns att hämta";
     html = `
       <p>Hej ${name || ""},</p>
-      <p>Ditt paket har anlänt till utlämningsstället.</p>
+      <p>Ditt paket har anlänt till utlämningsstället. Kom ihåg att hämta det i tid.</p>
       <p>Spåra här: <a href="${link}">${link}</a></p>
+      <p>Vänliga hälsningar<br/>Icefot</p>
     `;
   } else if (emailType === "delivered") {
     subject = "Ditt paket är levererat";
     html = `
       <p>Hej ${name || ""},</p>
       <p>Enligt spårningen är ditt paket levererat.</p>
-      <p>Vänliga hälsningar,<br>Icefot</p>
+      <p>Vänliga hälsningar<br/>Icefot</p>
     `;
+  } else {
+    return;
   }
 
   await resend.emails.send({
@@ -137,4 +153,3 @@ async function sendStatusEmail({ resend, to, name, trackingNumber, emailType, tr
     html,
   });
 }
-
