@@ -17,6 +17,8 @@ module.exports = async function handler(req, res) {
 
   // 1. Hämta alla ordrar
 const { data: orders, error } = await supabase.from("Orders").select("*");
+    const debug = [];
+
 
 
   if (error) {
@@ -37,8 +39,17 @@ const { data: orders, error } = await supabase.from("Orders").select("*");
     );
     if (!currentStatus) continue;
 
-    const emailType = mapStatusToEmailType(currentStatus);
+       const emailType = mapStatusToEmailType(currentStatus);
+
+    // Spara debug-info
+    debug.push({
+      trackingNumber: order.tracking_number,
+      currentStatus,
+      emailType,
+    });
+
     if (!emailType) continue;
+
 
     if (emailType !== order.last_status) {
       await sendStatusEmail({
@@ -62,7 +73,8 @@ const { data: orders, error } = await supabase.from("Orders").select("*");
     }
   }
 
-  return res.status(200).json({ ok: true, sentCount });
+  return res.status(200).json({ ok: true, sentCount, debug });
+
 };
 
 async function getShip24Status(trackingNumber, apiKey) {
