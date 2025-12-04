@@ -57,6 +57,9 @@
         0 18px 45px rgba(15, 23, 42, 0.06),
         0 0 0 1px rgba(15, 23, 42, 0.02);
       margin-bottom: 18px;
+      max-width: 980px;
+      margin-left: auto;
+      margin-right: auto;
     }
 
     .card-header {
@@ -88,7 +91,7 @@
       color: var(--text-muted);
     }
 
-    /* Tabs (just en aktiv) */
+    /* Tabs */
     .tabs {
       display: flex;
       border-radius: 999px;
@@ -104,7 +107,14 @@
       font-size: 13px;
       border-radius: 999px;
       border: none;
-      cursor: default;
+      cursor: pointer;
+      background: transparent;
+      color: #374151;
+      font-weight: 500;
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+
+    .tab.tab-active {
       background: var(--bg-pill);
       color: white;
       font-weight: 600;
@@ -429,27 +439,30 @@
       margin-top: 4px;
     }
   </style>
-
+</head>
+<body>
+  <div class="page">
     <div class="card">
       <div class="card-header">
         <div class="card-icon">📦</div>
         <div>
           <div class="card-title">Spåra din beställning</div>
           <div class="card-subtitle">
-            Ange ditt 4PX-spårningsnummer för att följa paketet hela vägen hem.
+            Spåra med ditt 4PX-spårningsnummer eller med ordernummer + e-postadress.
           </div>
         </div>
       </div>
 
       <div class="tabs">
-  <button class="tab tab-active" type="button" data-tab="tracking">
-    Spårningsnummer
-  </button>
-  <button class="tab" type="button" data-tab="order">
-    Ordernummer + e-post
-  </button>
-</div>
+        <button class="tab tab-active" type="button" data-tab="tracking">
+          Spårningsnummer
+        </button>
+        <button class="tab" type="button" data-tab="order">
+          Ordernummer + e-post
+        </button>
+      </div>
 
+      <!-- Spårningsnummer-formulär -->
       <form id="track-form">
         <div class="search-row">
           <div class="search-input-wrapper">
@@ -468,6 +481,36 @@
         <div class="hint">
           Skriv in ditt 4PX-nummer exakt som i mailet.
           <br /><small>Om du nyligen fått spårnumret kan det dröja lite innan första händelsen syns.</small>
+        </div>
+      </form>
+
+      <!-- Ordernummer + e-post-formulär -->
+      <form id="order-form" style="display:none;">
+        <div class="search-row">
+          <div class="search-input-wrapper">
+            <input
+              id="order-input"
+              class="search-input"
+              type="text"
+              placeholder="Ditt ordernummer (t.ex. 22104)"
+              autocomplete="off"
+            />
+          </div>
+          <div class="search-input-wrapper">
+            <input
+              id="email-input"
+              class="search-input"
+              type="email"
+              placeholder="Din e-postadress"
+              autocomplete="off"
+            />
+          </div>
+          <button type="submit" class="primary-btn" id="order-submit-btn">
+            <span>🔍</span> Spåra
+          </button>
+        </div>
+        <div class="hint">
+          Ange ditt ordernummer och samma e-postadress som du använde vid beställningen.
         </div>
       </form>
 
@@ -530,7 +573,7 @@
       </div>
 
       <div id="empty-state" class="empty-state" style="margin-top:10px;">
-        Skriv in ditt spårningsnummer ovan för att se status på din beställning.
+        Skriv in ditt spårningsnummer eller välj “Ordernummer + e-post” för att se status på din beställning.
       </div>
     </div>
   </div>
@@ -542,6 +585,12 @@
     const errorBox = document.getElementById("error");
     const resultBox = document.getElementById("result");
     const emptyState = document.getElementById("empty-state");
+
+    const orderForm = document.getElementById("order-form");
+    const orderInput = document.getElementById("order-input");
+    const emailInput = document.getElementById("email-input");
+    const orderBtn = document.getElementById("order-submit-btn");
+    const tabs = document.querySelectorAll(".tab");
 
     const tnSpan = document.getElementById("res-tn");
     const statusPillText = document.getElementById("res-status-pill-text");
@@ -666,6 +715,21 @@
       return data;
     }
 
+    async function fetchTrackingByOrder(order, email) {
+      const url = `/api/track-order?order=${encodeURIComponent(
+        order
+      )}&email=${encodeURIComponent(email)}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      if (!data.ok) {
+        throw new Error(
+          data.error ||
+            "Kunde inte hitta någon order. Kontrollera ordernummer och e-post."
+        );
+      }
+      return data;
+    }
+
     function renderResult(data) {
       // huvudinfo
       tnSpan.textContent = data.trackingNumber || "–";
@@ -740,6 +804,8 @@
         if (pushToUrl) {
           const url = new URL(window.location.href);
           url.searchParams.set("tn", value);
+          url.searchParams.delete("order");
+          url.searchParams.delete("email");
           history.replaceState(null, "", url.toString());
         }
       } catch (err) {
@@ -752,19 +818,89 @@
       }
     }
 
+    async function handleOrderSearch(order, email, pushToUrl = true) {
+      if (!order || !email) return;
+
+      errorBox.style.display = "none";
+      resultBox.style.display = "none";
+
+      orderBtn.disabled = true;
+      try {
+        const normalized = await fetchTrackingByOrder(order, email);
+        renderResult(normalized);
+
+        if (pushToUrl) {
+          const url = new URL(window.location.href);
+          url.searchParams.set("order", order);
+          url.searchParams.set("email", email);
+          url.searchParams.delete("tn");
+          history.replaceState(null, "", url.toString());
+        }
+      } catch (err) {
+        resultBox.style.display = "none";
+        emptyState.style.display = "none";
+        errorBox.textContent = err.message || "Något gick fel.";
+        errorBox.style.display = "block";
+      } finally {
+        orderBtn.disabled = false;
+      }
+    }
+
     form.addEventListener("submit", (e) => {
       e.preventDefault();
       const value = input.value.trim();
       handleSearch(value, true);
     });
 
-    // Läs ev. tn från URL och sök direkt
+    orderForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const order = orderInput.value.trim();
+      const email = emailInput.value.trim();
+      handleOrderSearch(order, email, true);
+    });
+
+    // Tab-växling
+    tabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        tabs.forEach((t) => t.classList.remove("tab-active"));
+        tab.classList.add("tab-active");
+
+        const selected = tab.dataset.tab;
+        errorBox.style.display = "none";
+
+        if (selected === "tracking") {
+          form.style.display = "block";
+          orderForm.style.display = "none";
+        } else {
+          form.style.display = "none";
+          orderForm.style.display = "block";
+        }
+      });
+    });
+
+    // Läs ev. tn / order+email från URL och sök direkt
     (function initFromUrl() {
       const params = new URLSearchParams(window.location.search);
       const tn = params.get("tn");
+      const order = params.get("order");
+      const email = params.get("email");
+
       if (tn) {
         input.value = tn;
         handleSearch(tn, false);
+        return;
+      }
+
+      if (order && email) {
+        // Växla till order-fliken
+        tabs.forEach((t) => t.classList.remove("tab-active"));
+        document.querySelector('[data-tab="order"]').classList.add("tab-active");
+        form.style.display = "none";
+        orderForm.style.display = "block";
+
+        orderInput.value = order;
+        emailInput.value = email;
+        handleOrderSearch(order, email, false);
       }
     })();
   </script>
