@@ -1,7 +1,31 @@
 // /api/track-order.js
 const ORDERS = require("./orders-data");
 
-// Helper för IP-loggning (samma som i track.js)
+// Samma som i track.js
+function mapStatusMilestoneToSwedish(milestone) {
+  switch (milestone) {
+    case "info_received":
+      return "Information mottagen (försändelsen är registrerad men ej skickad än)";
+    case "in_transit":
+      return "På väg";
+    case "out_for_delivery":
+      return "Ute för leverans";
+    case "available_for_pickup":
+      return "Klar för upphämtning hos ombud";
+    case "delivered":
+      return "Levererad";
+    case "failed_attempt":
+      return "Misslyckat leveransförsök";
+    case "exception":
+      return "Problem med försändelsen";
+    case "pending":
+      return "Ingen spårningsinformation ännu";
+    default:
+      return "Okänd status";
+  }
+}
+
+// Helper för IP-loggning
 function getClientIp(req) {
   return (
     req.headers["x-forwarded-for"] ||
@@ -27,11 +51,10 @@ module.exports = async (req, res) => {
   if (!order || !email) {
     return res.status(400).json({
       ok: false,
-      error: "order och email krävs"
+      error: "order och email krävs",
     });
   }
 
-  // Hitta match i lokal data
   const match = ORDERS.find(
     (o) =>
       o.order_number === order &&
@@ -42,7 +65,7 @@ module.exports = async (req, res) => {
     console.log("[ORDER_TRACK_NOT_FOUND]", { order, email });
     return res.status(404).json({
       ok: false,
-      error: "Hittar ingen order med detta ordernummer och e-post"
+      error: "Hittar ingen order med detta ordernummer och e-post",
     });
   }
 
@@ -52,7 +75,7 @@ module.exports = async (req, res) => {
   if (!apiKey) {
     return res.status(500).json({
       ok: false,
-      error: "SHIP24_API_KEY saknas på servern"
+      error: "SHIP24_API_KEY saknas på servern",
     });
   }
 
@@ -84,7 +107,6 @@ module.exports = async (req, res) => {
       });
     }
 
-    // Hämta tracking-objekt (samma som i track.js)
     const tracking = data?.data?.trackings?.[0];
     if (!tracking) {
       return res.status(404).json({
@@ -94,7 +116,6 @@ module.exports = async (req, res) => {
       });
     }
 
-    // Gör exakt samma normalisering som i track.js
     const tracker = tracking.tracker || {};
     const shipment = tracking.shipment || {};
     const events = Array.isArray(tracking.events) ? tracking.events : [];
@@ -103,16 +124,20 @@ module.exports = async (req, res) => {
 
     const normalized = {
       ok: true,
-      mode: "order", // viktigt för debugging
-      trackingNumber: tracker.trackingNumber || shipment.trackingNumber || trackingNumber,
+      mode: "order",
+      trackingNumber:
+        tracker.trackingNumber ||
+        shipment.trackingNumber ||
+        trackingNumber,
       statusMilestone: milestone,
-      statusSwedish: milestone, // frontend mappar själv
+      statusSwedish: mapStatusMilestoneToSwedish(milestone),
       lastUpdate: tracking.metadata?.generatedAt || null,
       postnordNumber:
         (shipment.trackingNumbers || [])
           .map((t) => t.tn)
-          .find((tn) => tn && (tn.startsWith("UJ") || tn.startsWith("003"))) ||
-        null,
+          .find(
+            (tn) => tn && (tn.startsWith("UJ") || tn.startsWith("003"))
+          ) || null,
       events: events.map((e) => ({
         datetime: e.datetime || e.occurrenceDatetime || null,
         location: e.location || null,
@@ -124,7 +149,6 @@ module.exports = async (req, res) => {
     console.log("[ORDER_TRACK_SUCCESS]", normalized.trackingNumber);
 
     return res.status(200).json(normalized);
-
   } catch (err) {
     console.log("[ORDER_TRACK_EXCEPTION]", err);
     return res.status(500).json({
