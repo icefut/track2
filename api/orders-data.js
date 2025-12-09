@@ -1118,7 +1118,7 @@ module.exports = [
     order_number: "22231",
     email: "fabbebjorklund@gmail.com",
     tracking_number: "4PX3002312973444CN",
-  }
+  },
   {
     order_number: "22233",
     email: "ante_holmberg@hotmail.com",
