@@ -612,7 +612,7 @@ module.exports = [
   {
     order_number: "22142",
     email: "olle.jacobson@hotmail.com",
-    tracking_number: "4PX3002302707295CN",
+    tracking_number: "4PX3002336750670CN",
   },
   {
     order_number: "22140",
