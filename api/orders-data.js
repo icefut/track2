@@ -1794,4 +1794,44 @@ module.exports = [
     email: "ukullin@gmail.com",
     tracking_number: "4PX3002369536548CN",
   },
+  {
+    order_number: "22472",
+    email: "emil_sahlin88@hotmail.com",
+    tracking_number: "4PX3002381034572CN",
+  },
+  {
+    order_number: "22473",
+    email: "manolyaerdem050@hotmail.com",
+    tracking_number: "4PX3002381037016CN",
+  },
+  {
+    order_number: "22430",
+    email: "fariiidah@hotmail.com",
+    tracking_number: "4PX3002381039638CN",
+  },
+  {
+    order_number: "22483",
+    email: "erik.leijonflycht@gmail.com",
+    tracking_number: "4PX3002380980207CN",
+  },
+  {
+    order_number: "22486",
+    email: "eltonhast08@gmail.com",
+    tracking_number: "4PX3002380983390CN",
+  },
+  {
+    order_number: "22489",
+    email: "mustafazadran9@gmail.com",
+    tracking_number: "4PX3002380990527CN",
+  },
+  {
+    order_number: "22490",
+    email: "n_mantyla@hotmail.com",
+    tracking_number: "4PX3002380996024CN",
+  },
+  {
+    order_number: "22491",
+    email: "saleteg.karin@gmail.com",
+    tracking_number: "4PX3002381033018CN",
+  },
 ];
