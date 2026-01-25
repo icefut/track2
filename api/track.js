@@ -1,48 +1,62 @@
-// /api/track.js
-// Vercel serverless-funktion som anropar Ship24 API
-// Returnerar både PostNord-nummer och CityMail-nummer om de finns.
+// /api/track.js (v2 - robust)
+// Hämtar Ship24 tracking och letar PostNord + CityMail tracking numbers även om de ligger "djupt" i svaret.
 
 function mapStatusMilestoneToSwedish(milestone) {
   switch (milestone) {
-    case "info_received":
-      return "Information mottagen (försändelsen är registrerad men ej skickad än)";
-    case "in_transit":
-      return "På väg";
-    case "out_for_delivery":
-      return "Ute för leverans";
-    case "available_for_pickup":
-      return "Klar för upphämtning hos ombud";
-    case "delivered":
-      return "Levererad";
-    case "failed_attempt":
-      return "Misslyckat leveransförsök";
-    case "exception":
-      return "Problem med försändelsen";
-    case "pending":
-      return "Ingen spårningsinformation ännu";
-    default:
-      return "Okänd status";
+    case "info_received": return "Information mottagen (försändelsen är registrerad men ej skickad än)";
+    case "in_transit": return "På väg";
+    case "out_for_delivery": return "Ute för leverans";
+    case "available_for_pickup": return "Klar för upphämtning hos ombud";
+    case "delivered": return "Levererad";
+    case "failed_attempt": return "Misslyckat leveransförsök";
+    case "exception": return "Problem med försändelsen";
+    case "pending": return "Ingen spårningsinformation ännu";
+    default: return "Okänd status";
   }
 }
 
-function pickTrackingNumbers(shipment) {
-  const list = Array.isArray(shipment?.trackingNumbers) ? shipment.trackingNumbers : [];
+// Rekursiv "scanner" som hittar första sträng som matchar regex i hela objektet
+function findFirstStringMatch(obj, regex) {
+  const stack = [obj];
+  const seen = new Set();
 
-  // Alla tn som strängar
+  while (stack.length) {
+    const cur = stack.pop();
+    if (!cur) continue;
+
+    if (typeof cur === "string") {
+      const s = cur.trim();
+      if (regex.test(s)) return s;
+      continue;
+    }
+
+    if (typeof cur !== "object") continue;
+    if (seen.has(cur)) continue;
+    seen.add(cur);
+
+    if (Array.isArray(cur)) {
+      for (let i = 0; i < cur.length; i++) stack.push(cur[i]);
+    } else {
+      for (const k of Object.keys(cur)) stack.push(cur[k]);
+    }
+  }
+  return null;
+}
+
+function pickFromShipmentTrackingNumbers(shipment) {
+  const list = Array.isArray(shipment?.trackingNumbers) ? shipment.trackingNumbers : [];
   const all = list.map((t) => (t?.tn || "").toString().trim()).filter(Boolean);
 
-  // PostNord: ofta UJ...SE eller 003...
   const postnord =
     all.find((tn) => tn.startsWith("UJ") && tn.endsWith("SE")) ||
     all.find((tn) => tn.startsWith("003")) ||
     null;
 
-  // CityMail (enligt dig): BC....CN
   const citymail =
     all.find((tn) => tn.startsWith("BC") && tn.endsWith("CN")) ||
     null;
 
-  return { postnordNumber: postnord, citymailNumber: citymail, allTrackingNumbers: all };
+  return { postnord, citymail, all };
 }
 
 module.exports = async (req, res) => {
@@ -53,14 +67,12 @@ module.exports = async (req, res) => {
   if (req.method === "OPTIONS") return res.status(200).end();
 
   const value = (req.query.value || "").toString().trim();
-  const mode = (req.query.mode || "tracking").toString().trim(); // "tracking" | "order"
+  const mode = (req.query.mode || "tracking").toString().trim();
 
   if (!value) return res.status(400).json({ ok: false, error: "Saknar värde (value) i query" });
 
   const apiKey = process.env.SHIP24_API_KEY;
-  if (!apiKey) {
-    return res.status(500).json({ ok: false, error: "SHIP24_API_KEY är inte satt på servern" });
-  }
+  if (!apiKey) return res.status(500).json({ ok: false, error: "SHIP24_API_KEY är inte satt på servern" });
 
   const ship24Body = { trackingNumber: value };
   if (mode === "order") ship24Body.searchBy = "clientTrackerId";
@@ -102,8 +114,18 @@ module.exports = async (req, res) => {
 
     const milestone = shipment.statusMilestone || tracker.statusMilestone || null;
 
-    // 👇 NYTT: plocka både PostNord & CityMail
-    const { postnordNumber, citymailNumber, allTrackingNumbers } = pickTrackingNumbers(shipment);
+    // 1) Försök från shipment.trackingNumbers (snabbast om det finns)
+    const picked = pickFromShipmentTrackingNumbers(shipment);
+
+    // 2) Fallback: scanna HELA tracking-objektet (här brukar Ship24 gömma secondary TN ibland)
+    const postnordRegex = /^(UJ)[A-Z0-9]+SE$|^(003)[0-9]+/;
+    const citymailRegex = /^(BC)[A-Z0-9]+CN$/;
+
+    const scannedPostnord = findFirstStringMatch(tracking, postnordRegex);
+    const scannedCitymail = findFirstStringMatch(tracking, citymailRegex);
+
+    const postnordNumber = picked.postnord || scannedPostnord || null;
+    const citymailNumber = picked.citymail || scannedCitymail || null;
 
     const normalized = {
       ok: true,
@@ -116,8 +138,8 @@ module.exports = async (req, res) => {
       postnordNumber,
       citymailNumber,
 
-      // valfritt men bra för debug:
-      allTrackingNumbers,
+      // Debug (bra tills du ser att allt funkar, sen kan vi ta bort)
+      allTrackingNumbers: picked.all,
 
       statusMilestone: milestone,
       statusSwedish: mapStatusMilestoneToSwedish(milestone),
