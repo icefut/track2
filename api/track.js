@@ -1,7 +1,7 @@
 // /api/track.js
 // Vercel serverless-funktion som anropar Ship24 API
 // Stöd: 4PX tracking + order (clientTrackerId)
-// Extra: plockar ut PostNord + CityMail tracking numbers om de finns
+// Extra: plockar ut PostNord + CityMail tracking numbers om de finns (CityMail: BC...CN)
 
 function mapStatusMilestoneToSwedish(milestone) {
   switch (milestone) {
@@ -26,20 +26,29 @@ function mapStatusMilestoneToSwedish(milestone) {
   }
 }
 
-// Hjälp: normalisera strängar för jämförelse
 function norm(s) {
   return (s || "").toString().trim().toLowerCase();
 }
 
-// Försök hitta PostNord/CityMail i Ship24 trackingNumbers
+function isCitymailBC(tn) {
+  const v = (tn || "").toString().trim().toUpperCase();
+  return v.startsWith("BC") && v.endsWith("CN") && v.length >= 8;
+}
+
+function is4px(tn) {
+  const v = (tn || "").toString().trim().toUpperCase();
+  return v.startsWith("4PX") && v.endsWith("CN");
+}
+
+function isPostnordTN(tn) {
+  const v = (tn || "").toString().trim().toUpperCase();
+  return v.startsWith("UJ") || v.startsWith("003");
+}
+
 function extractCarrierNumbers(shipment, tracker, inputValue) {
   const trackingNumbers = Array.isArray(shipment?.trackingNumbers)
     ? shipment.trackingNumbers
     : [];
-
-  // Ship24 brukar ha objects typ:
-  // { tn: "UJ...", courierCode: "postnord" } eller liknande.
-  // Men ibland saknas courierCode, då får vi gissa.
 
   const all = trackingNumbers
     .map((t) => ({
@@ -49,17 +58,16 @@ function extractCarrierNumbers(shipment, tracker, inputValue) {
     }))
     .filter((x) => x.tn);
 
-  // PostNord: pattern + courier hint
+  // POSTNORD: pattern + courier hint
   const postnord =
     all.find(
       (x) =>
-        x.tn.startsWith("UJ") ||
-        x.tn.startsWith("003") ||
+        isPostnordTN(x.tn) ||
         x.courierCode.includes("postnord") ||
         norm(x.courierName).includes("postnord")
     )?.tn || null;
 
-  // CityMail: courier hint
+  // CITYMAIL: courier hint
   let citymail =
     all.find(
       (x) =>
@@ -67,21 +75,28 @@ function extractCarrierNumbers(shipment, tracker, inputValue) {
         norm(x.courierName).includes("citymail")
     )?.tn || null;
 
-  // Fallback: om Ship24 inte anger courier men numret finns ändå:
-  // ta ett “annat” tracking number som inte är inputValue och inte är PostNord
-  // (bra när CityMail-numret faktiskt finns men courierCode saknas)
+  // CITYMAIL: ditt säkra format BC...CN
+  if (!citymail) {
+    citymail = all.find((x) => isCitymailBC(x.tn))?.tn || null;
+  }
+
+  // Fallback: om courier saknas men vi har en "annan TN"
   if (!citymail) {
     const inputTN = (inputValue || "").toString().trim();
-    const mainTN =
-      (tracker?.trackingNumber || shipment?.trackingNumber || inputTN).toString().trim();
+    const mainTN = (
+      tracker?.trackingNumber ||
+      shipment?.trackingNumber ||
+      inputTN
+    )
+      .toString()
+      .trim();
 
     const candidate = all.find((x) => {
       if (!x.tn) return false;
       if (x.tn === postnord) return false;
       if (x.tn === inputTN) return false;
       if (x.tn === mainTN) return false;
-      // undvik att vi råkar plocka 4PX igen
-      if (x.tn.toUpperCase().startsWith("4PX") && x.tn.toUpperCase().endsWith("CN")) return false;
+      if (is4px(x.tn)) return false; // undvik att vi råkar plocka 4PX igen
       return true;
     });
 
@@ -91,12 +106,11 @@ function extractCarrierNumbers(shipment, tracker, inputValue) {
   return {
     postnordNumber: postnord,
     citymailNumber: citymail,
-    carrierTrackingNumbers: all, // bonus: allt som Ship24 skickar
+    carrierTrackingNumbers: all,
   };
 }
 
 module.exports = async (req, res) => {
-  // CORS + JSON
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -179,11 +193,8 @@ module.exports = async (req, res) => {
       trackingNumber: tracker.trackingNumber || shipment.trackingNumber || value,
       clientTrackerId: tracker.clientTrackerId || null,
 
-      // Viktigt: båda visas nu
       postnordNumber,
       citymailNumber,
-
-      // Bonus om du vill visa fler carriers senare
       carrierTrackingNumbers,
 
       statusMilestone: milestone,
