@@ -35,6 +35,51 @@ function getClientIp(req) {
   );
 }
 
+// Plocka ut alla tracking numbers som Ship24 kan ge tillbaka
+function collectAllTrackingNumbers(tracking, fallbackTrackingNumber) {
+  const out = new Set();
+
+  const tracker = tracking?.tracker || {};
+  const shipment = tracking?.shipment || {};
+
+  // primära
+  if (tracker.trackingNumber) out.add(String(tracker.trackingNumber));
+  if (shipment.trackingNumber) out.add(String(shipment.trackingNumber));
+  if (fallbackTrackingNumber) out.add(String(fallbackTrackingNumber));
+
+  // alternativa/local numbers (Ship24 brukar lägga här)
+  const arr = []
+    .concat(Array.isArray(shipment.trackingNumbers) ? shipment.trackingNumbers : [])
+    .concat(Array.isArray(tracker.trackingNumbers) ? tracker.trackingNumbers : []);
+
+  for (const t of arr) {
+    const tn = t?.tn || t?.trackingNumber || t;
+    if (tn) out.add(String(tn));
+  }
+
+  return Array.from(out);
+}
+
+function pickPostNordNumber(allNumbers) {
+  // PostNord brukar vara UJ...SE eller 003...
+  return (
+    allNumbers.find((tn) => tn && (tn.startsWith("UJ") || tn.startsWith("003"))) ||
+    null
+  );
+}
+
+function pickCityMailNumber(allNumbers) {
+  // Du sa: CityMail börjar på BC och slutar på CN
+  // (vi kör case-insensitive för säkerhets skull)
+  return (
+    allNumbers.find((tn) => {
+      if (!tn) return false;
+      const s = String(tn).toUpperCase();
+      return s.startsWith("BC") && s.endsWith("CN");
+    }) || null
+  );
+}
+
 module.exports = async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS");
@@ -56,9 +101,7 @@ module.exports = async (req, res) => {
   }
 
   const match = ORDERS.find(
-    (o) =>
-      o.order_number === order &&
-      o.email.toLowerCase() === email
+    (o) => o.order_number === order && o.email.toLowerCase() === email
   );
 
   if (!match) {
@@ -80,9 +123,7 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const body = {
-      trackingNumber: trackingNumber,
-    };
+    const body = { trackingNumber };
 
     const response = await fetch(
       "https://api.ship24.com/public/v1/trackers/track",
@@ -120,24 +161,27 @@ module.exports = async (req, res) => {
     const shipment = tracking.shipment || {};
     const events = Array.isArray(tracking.events) ? tracking.events : [];
 
-    const milestone = shipment.statusMilestone || tracker.statusMilestone || null;
+    const milestone =
+      shipment.statusMilestone || tracker.statusMilestone || null;
+
+    // ✅ NYTT: samla alla nummer + plocka både PostNord och CityMail
+    const allNumbers = collectAllTrackingNumbers(tracking, trackingNumber);
+    const postnordNumber = pickPostNordNumber(allNumbers);
+    const citymailNumber = pickCityMailNumber(allNumbers);
 
     const normalized = {
       ok: true,
       mode: "order",
       trackingNumber:
-        tracker.trackingNumber ||
-        shipment.trackingNumber ||
-        trackingNumber,
+        tracker.trackingNumber || shipment.trackingNumber || trackingNumber,
+
       statusMilestone: milestone,
       statusSwedish: mapStatusMilestoneToSwedish(milestone),
       lastUpdate: tracking.metadata?.generatedAt || null,
-      postnordNumber:
-        (shipment.trackingNumbers || [])
-          .map((t) => t.tn)
-          .find(
-            (tn) => tn && (tn.startsWith("UJ") || tn.startsWith("003"))
-          ) || null,
+
+      postnordNumber,
+      citymailNumber, // ✅ NYTT
+
       events: events.map((e) => ({
         datetime: e.datetime || e.occurrenceDatetime || null,
         location: e.location || null,
@@ -146,7 +190,11 @@ module.exports = async (req, res) => {
       })),
     };
 
-    console.log("[ORDER_TRACK_SUCCESS]", normalized.trackingNumber);
+    console.log("[ORDER_TRACK_SUCCESS]", {
+      trackingNumber: normalized.trackingNumber,
+      postnordNumber,
+      citymailNumber,
+    });
 
     return res.status(200).json(normalized);
   } catch (err) {
