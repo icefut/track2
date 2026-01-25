@@ -1,7 +1,6 @@
 // /api/track.js
 // Vercel serverless-funktion som anropar Ship24 API
-// Stöd: 4PX tracking + order (clientTrackerId)
-// Extra: plockar ut PostNord + CityMail tracking numbers om de finns (CityMail: BC...CN)
+// Returnerar både PostNord-nummer och CityMail-nummer om de finns.
 
 function mapStatusMilestoneToSwedish(milestone) {
   switch (milestone) {
@@ -26,88 +25,24 @@ function mapStatusMilestoneToSwedish(milestone) {
   }
 }
 
-function norm(s) {
-  return (s || "").toString().trim().toLowerCase();
-}
+function pickTrackingNumbers(shipment) {
+  const list = Array.isArray(shipment?.trackingNumbers) ? shipment.trackingNumbers : [];
 
-function isCitymailBC(tn) {
-  const v = (tn || "").toString().trim().toUpperCase();
-  return v.startsWith("BC") && v.endsWith("CN") && v.length >= 8;
-}
+  // Alla tn som strängar
+  const all = list.map((t) => (t?.tn || "").toString().trim()).filter(Boolean);
 
-function is4px(tn) {
-  const v = (tn || "").toString().trim().toUpperCase();
-  return v.startsWith("4PX") && v.endsWith("CN");
-}
-
-function isPostnordTN(tn) {
-  const v = (tn || "").toString().trim().toUpperCase();
-  return v.startsWith("UJ") || v.startsWith("003");
-}
-
-function extractCarrierNumbers(shipment, tracker, inputValue) {
-  const trackingNumbers = Array.isArray(shipment?.trackingNumbers)
-    ? shipment.trackingNumbers
-    : [];
-
-  const all = trackingNumbers
-    .map((t) => ({
-      tn: (t?.tn || "").toString().trim(),
-      courierCode: norm(t?.courierCode),
-      courierName: (t?.courierName || "").toString().trim(),
-    }))
-    .filter((x) => x.tn);
-
-  // POSTNORD: pattern + courier hint
+  // PostNord: ofta UJ...SE eller 003...
   const postnord =
-    all.find(
-      (x) =>
-        isPostnordTN(x.tn) ||
-        x.courierCode.includes("postnord") ||
-        norm(x.courierName).includes("postnord")
-    )?.tn || null;
+    all.find((tn) => tn.startsWith("UJ") && tn.endsWith("SE")) ||
+    all.find((tn) => tn.startsWith("003")) ||
+    null;
 
-  // CITYMAIL: courier hint
-  let citymail =
-    all.find(
-      (x) =>
-        x.courierCode.includes("citymail") ||
-        norm(x.courierName).includes("citymail")
-    )?.tn || null;
+  // CityMail (enligt dig): BC....CN
+  const citymail =
+    all.find((tn) => tn.startsWith("BC") && tn.endsWith("CN")) ||
+    null;
 
-  // CITYMAIL: ditt säkra format BC...CN
-  if (!citymail) {
-    citymail = all.find((x) => isCitymailBC(x.tn))?.tn || null;
-  }
-
-  // Fallback: om courier saknas men vi har en "annan TN"
-  if (!citymail) {
-    const inputTN = (inputValue || "").toString().trim();
-    const mainTN = (
-      tracker?.trackingNumber ||
-      shipment?.trackingNumber ||
-      inputTN
-    )
-      .toString()
-      .trim();
-
-    const candidate = all.find((x) => {
-      if (!x.tn) return false;
-      if (x.tn === postnord) return false;
-      if (x.tn === inputTN) return false;
-      if (x.tn === mainTN) return false;
-      if (is4px(x.tn)) return false; // undvik att vi råkar plocka 4PX igen
-      return true;
-    });
-
-    citymail = candidate?.tn || null;
-  }
-
-  return {
-    postnordNumber: postnord,
-    citymailNumber: citymail,
-    carrierTrackingNumbers: all,
-  };
+  return { postnordNumber: postnord, citymailNumber: citymail, allTrackingNumbers: all };
 }
 
 module.exports = async (req, res) => {
@@ -115,66 +50,50 @@ module.exports = async (req, res) => {
   res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-  if (req.method === "OPTIONS") {
-    res.status(200).end();
-    return;
-  }
+  if (req.method === "OPTIONS") return res.status(200).end();
 
   const value = (req.query.value || "").toString().trim();
   const mode = (req.query.mode || "tracking").toString().trim(); // "tracking" | "order"
 
-  if (!value) {
-    res.status(400).json({ ok: false, error: "Saknar värde (value) i query" });
-    return;
-  }
+  if (!value) return res.status(400).json({ ok: false, error: "Saknar värde (value) i query" });
 
   const apiKey = process.env.SHIP24_API_KEY;
   if (!apiKey) {
-    res
-      .status(500)
-      .json({ ok: false, error: "SHIP24_API_KEY är inte satt på servern" });
-    return;
+    return res.status(500).json({ ok: false, error: "SHIP24_API_KEY är inte satt på servern" });
   }
 
   const ship24Body = { trackingNumber: value };
-  if (mode === "order") {
-    ship24Body.searchBy = "clientTrackerId";
-  }
+  if (mode === "order") ship24Body.searchBy = "clientTrackerId";
 
   try {
-    const response = await fetch(
-      "https://api.ship24.com/public/v1/trackers/track",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify(ship24Body),
-      }
-    );
+    const response = await fetch("https://api.ship24.com/public/v1/trackers/track", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify(ship24Body),
+    });
 
     const data = await response.json();
 
     if (!response.ok) {
-      res.status(response.status).json({
+      return res.status(response.status).json({
         ok: false,
         error: "Fel från Ship24",
         httpStatusFromShip24: response.status,
         raw: data,
       });
-      return;
     }
 
     const tracking = data?.data?.trackings?.[0];
     if (!tracking) {
-      res.status(404).json({
+      return res.status(404).json({
         ok: false,
         error: "Ingen försändelse hittades hos Ship24",
         httpStatusFromShip24: response.status,
         raw: data,
       });
-      return;
     }
 
     const tracker = tracking.tracker || {};
@@ -183,23 +102,27 @@ module.exports = async (req, res) => {
 
     const milestone = shipment.statusMilestone || tracker.statusMilestone || null;
 
-    const { postnordNumber, citymailNumber, carrierTrackingNumbers } =
-      extractCarrierNumbers(shipment, tracker, value);
+    // 👇 NYTT: plocka både PostNord & CityMail
+    const { postnordNumber, citymailNumber, allTrackingNumbers } = pickTrackingNumbers(shipment);
 
     const normalized = {
       ok: true,
       mode,
       httpStatusFromShip24: response.status,
+
       trackingNumber: tracker.trackingNumber || shipment.trackingNumber || value,
       clientTrackerId: tracker.clientTrackerId || null,
 
       postnordNumber,
       citymailNumber,
-      carrierTrackingNumbers,
+
+      // valfritt men bra för debug:
+      allTrackingNumbers,
 
       statusMilestone: milestone,
       statusSwedish: mapStatusMilestoneToSwedish(milestone),
       lastUpdate: tracking.metadata?.generatedAt || null,
+
       events: events.map((e) => ({
         datetime: e.datetime || e.occurrenceDatetime || null,
         location: e.location || null,
@@ -208,12 +131,9 @@ module.exports = async (req, res) => {
       })),
     };
 
-    res.status(200).json(normalized);
+    return res.status(200).json(normalized);
   } catch (err) {
     console.error("Ship24 API error:", err);
-    res.status(500).json({
-      ok: false,
-      error: "Internt fel när Ship24 API anropades",
-    });
+    return res.status(500).json({ ok: false, error: "Internt fel när Ship24 API anropades" });
   }
 };
