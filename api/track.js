@@ -1,7 +1,157 @@
 // /api/track.js
 // Vercel serverless-funktion som anropar Ship24 API
-// + plockar både PostNord-nummer och CityMail-nummer om de finns.
+// + plockar både PostNord-nummer och CityMail-nummer
+// + ETA från CSV-regler (postnord/citymail)
 
+const fs = require("fs");
+const path = require("path");
+
+// ====== ETA RULES (CSV) ======
+const ETA_CSV_FILENAME = "eta-logistics-rules-icefot.csv";
+let ETA_RULES_CACHE = null;
+
+function stripBom(s) {
+  if (!s) return s;
+  return s.charCodeAt(0) === 0xfeff ? s.slice(1) : s;
+}
+
+// Minimal CSV parser (din CSV har inga kommatecken i fälten)
+function parseCsvSimple(csvText) {
+  const text = stripBom(csvText).replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+  const lines = text.split("\n").map((l) => l.trim()).filter(Boolean);
+  if (lines.length < 2) return [];
+  const headers = lines[0].split(",").map((h) => h.trim());
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    const parts = lines[i].split(",").map((p) => p.trim());
+    const obj = {};
+    for (let j = 0; j < headers.length; j++) obj[headers[j]] = parts[j] ?? "";
+    rows.push(obj);
+  }
+  return rows;
+}
+
+function loadEtaRules() {
+  if (ETA_RULES_CACHE) return ETA_RULES_CACHE;
+
+  const csvPath = path.join(__dirname, ETA_CSV_FILENAME);
+  const raw = fs.readFileSync(csvPath, "utf8");
+  const parsed = parseCsvSimple(raw);
+
+  const rules = parsed
+    .map((r) => ({
+      carrier: (r.carrier || "").toLowerCase().trim(),
+      priority: Number(r.priority || 9999),
+      match_type: (r.match_type || "contains").toLowerCase().trim(),
+      match_value: String(r.match_value || "").trim(),
+      eta_min_business_days: Number(r.eta_min_business_days || 0),
+      eta_max_business_days: Number(r.eta_max_business_days || 0),
+      eta_label_sv: String(r.eta_label_sv || "").trim(),
+      note_sv: String(r.note_sv || "").trim(),
+    }))
+    .filter((r) => r.carrier && r.match_value);
+
+  rules.sort((a, b) => {
+    if (a.carrier !== b.carrier) return a.carrier.localeCompare(b.carrier);
+    return a.priority - b.priority;
+  });
+
+  ETA_RULES_CACHE = rules;
+  return rules;
+}
+
+function normalizeForMatch(s) {
+  return String(s || "").trim().toLowerCase();
+}
+
+function matchesRule(text, rule) {
+  const t = normalizeForMatch(text);
+  const v = normalizeForMatch(rule.match_value);
+  if (!t || !v) return false;
+
+  if (rule.match_type === "equals") return t === v;
+  if (rule.match_type === "regex") {
+    try {
+      const re = new RegExp(rule.match_value, "i");
+      return re.test(String(text || ""));
+    } catch {
+      return false;
+    }
+  }
+  // default: contains
+  return t.includes(v);
+}
+
+function detectCarrier({ citymailNumber, postnordNumber, trackingNumber }) {
+  if (citymailNumber) return "citymail";
+  if (postnordNumber) return "postnord";
+
+  const tn = String(trackingNumber || "").toUpperCase();
+  if (tn.startsWith("BC") && tn.endsWith("CN")) return "citymail";
+  if (tn.startsWith("UJ") || tn.startsWith("003")) return "postnord";
+
+  return "unknown";
+}
+
+function pickLatestEventStatus(events) {
+  if (!Array.isArray(events) || events.length === 0) return "";
+
+  const parsed = events.map((e, idx) => {
+    const dt = e.datetime || e.occurrenceDatetime || null;
+    const ms = dt ? Date.parse(dt) : NaN;
+    return { e, idx, ms };
+  });
+
+  parsed.sort((a, b) => {
+    const aValid = Number.isFinite(a.ms);
+    const bValid = Number.isFinite(b.ms);
+    if (aValid && bValid) return b.ms - a.ms;
+    if (aValid && !bValid) return -1;
+    if (!aValid && bValid) return 1;
+    return a.idx - b.idx;
+  });
+
+  return parsed[0]?.e?.status || "";
+}
+
+function estimateDeliveryFromRules({ carrier, latestStatusText, milestone }) {
+  const rules = loadEtaRules();
+  const carrierRules = rules.filter((r) => r.carrier === carrier);
+
+  for (const r of carrierRules) {
+    if (matchesRule(latestStatusText, r)) {
+      return {
+        estimated_delivery:
+          r.eta_label_sv ||
+          `${r.eta_min_business_days}–${r.eta_max_business_days} arbetsdagar`,
+        eta_min_business_days: r.eta_min_business_days,
+        eta_max_business_days: r.eta_max_business_days,
+        eta_note_sv: r.note_sv || "",
+        matched_rule: { carrier: r.carrier, priority: r.priority, match_type: r.match_type, match_value: r.match_value },
+      };
+    }
+  }
+
+  if ((milestone || "").toLowerCase() === "delivered") {
+    return {
+      estimated_delivery: "Levererad",
+      eta_min_business_days: 0,
+      eta_max_business_days: 0,
+      eta_note_sv: "",
+      matched_rule: null,
+    };
+  }
+
+  return {
+    estimated_delivery: "Beräknad leverans saknas för denna status",
+    eta_min_business_days: null,
+    eta_max_business_days: null,
+    eta_note_sv: "Uppskattning baserad på nuvarande status",
+    matched_rule: null,
+  };
+}
+
+// ====== Din befintliga logik ======
 function mapStatusMilestoneToSwedish(milestone) {
   switch (milestone) {
     case "info_received":
@@ -27,8 +177,6 @@ function mapStatusMilestoneToSwedish(milestone) {
 
 function normalizeTrackingNumbers(shipment, tracker) {
   const out = [];
-
-  // Ship24 kan returnera trackingNumbers på lite olika ställen/format.
   const pushTn = (tn) => {
     if (!tn) return;
     const v = String(tn).trim();
@@ -46,16 +194,13 @@ function normalizeTrackingNumbers(shipment, tracker) {
     for (const t of arr2) pushTn(t?.tn || t?.trackingNumber || t);
   }
 
-  // ibland kan numret ligga som "trackingNumber" direkt
   pushTn(tracker?.trackingNumber);
   pushTn(shipment?.trackingNumber);
 
-  // dedupe
   return Array.from(new Set(out));
 }
 
 function pickPostnordNumber(allTn) {
-  // Behåll din gamla logik + lite robustare
   return (
     allTn.find((tn) => tn.startsWith("UJ") && tn.endsWith("SE")) ||
     allTn.find((tn) => tn.startsWith("003")) ||
@@ -64,12 +209,10 @@ function pickPostnordNumber(allTn) {
 }
 
 function pickCitymailNumber(allTn) {
-  // Du sa: börjar med BC och slutar med CN
   return allTn.find((tn) => tn.startsWith("BC") && tn.endsWith("CN")) || null;
 }
 
 module.exports = async (req, res) => {
-  // CORS + JSON
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -89,9 +232,7 @@ module.exports = async (req, res) => {
 
   const apiKey = process.env.SHIP24_API_KEY;
   if (!apiKey) {
-    res
-      .status(500)
-      .json({ ok: false, error: "SHIP24_API_KEY är inte satt på servern" });
+    res.status(500).json({ ok: false, error: "SHIP24_API_KEY är inte satt på servern" });
     return;
   }
 
@@ -137,28 +278,50 @@ module.exports = async (req, res) => {
 
     const milestone = shipment.statusMilestone || tracker.statusMilestone || null;
 
-    // ✅ NYTT: plocka ut alla trackingNumbers och hitta både PostNord + CityMail
     const allTrackingNumbers = normalizeTrackingNumbers(shipment, tracker);
-
     const postnordNumber = pickPostnordNumber(allTrackingNumbers);
     const citymailNumber = pickCitymailNumber(allTrackingNumbers);
+
+    // ====== ETA (NYTT) ======
+    const trackingNumberResolved = tracker.trackingNumber || shipment.trackingNumber || value;
+
+    const carrierDetected = detectCarrier({
+      citymailNumber,
+      postnordNumber,
+      trackingNumber: trackingNumberResolved,
+    });
+
+    const latestStatusText = pickLatestEventStatus(events);
+
+    const eta = estimateDeliveryFromRules({
+      carrier: carrierDetected,
+      latestStatusText,
+      milestone,
+    });
 
     const normalized = {
       ok: true,
       mode,
       httpStatusFromShip24: response.status,
-      trackingNumber: tracker.trackingNumber || shipment.trackingNumber || value,
+      trackingNumber: trackingNumberResolved,
       clientTrackerId: tracker.clientTrackerId || null,
 
       postnordNumber,
       citymailNumber,
 
-      // Om du vill felsöka ibland kan du kolla dessa:
-      // allTrackingNumbers,
-
       statusMilestone: milestone,
       statusSwedish: mapStatusMilestoneToSwedish(milestone),
       lastUpdate: tracking.metadata?.generatedAt || null,
+
+      // ✅ NYTT: ETA
+      carrierDetected,
+      latestStatusText,
+      estimated_delivery: eta.estimated_delivery,
+      eta_min_business_days: eta.eta_min_business_days,
+      eta_max_business_days: eta.eta_max_business_days,
+      eta_note_sv: eta.eta_note_sv,
+      eta_matched_rule: eta.matched_rule, // för debug (kan tas bort)
+
       events: events.map((e) => ({
         datetime: e.datetime || e.occurrenceDatetime || null,
         location: e.location || null,
