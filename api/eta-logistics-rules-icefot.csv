@@ -1,0 +1,40 @@
+﻿carrier,priority,match_type,match_value,eta_min_business_days,eta_max_business_days,eta_label_sv,note_sv
+citymail,10,contains,paketinformation mottagen,8,10,8–10 arbetsdagar,Uppskattning baserad på nuvarande status
+citymail,15,contains,väntar på ditt paket,7,9,7–9 arbetsdagar,Uppskattning baserad på nuvarande status
+citymail,18,contains,hämtad av transportör,7,9,7–9 arbetsdagar,Uppskattning baserad på nuvarande status
+citymail,22,contains,ankom till anläggning och registrerades,7,9,7–9 arbetsdagar,Uppskattning baserad på nuvarande status
+citymail,24,contains,lämnade anläggning för vidare transport,6,8,6–8 arbetsdagar,Uppskattning baserad på nuvarande status
+citymail,30,contains,överlämnat till flygbolag,6,8,6–8 arbetsdagar,Uppskattning baserad på nuvarande status
+citymail,35,contains,avgick från ursprungsflygplats,6,8,6–8 arbetsdagar,Uppskattning baserad på nuvarande status
+citymail,40,contains,ankom till destinationsflygplats,4,6,4–6 arbetsdagar,Uppskattning baserad på nuvarande status
+citymail,45,contains,tullklarerad,2,3,2–3 arbetsdagar,Uppskattning baserad på nuvarande status
+citymail,50,contains,ankom till transitcenter,3,4,3–4 arbetsdagar,Uppskattning baserad på nuvarande status
+citymail,55,contains,parcel outbound from transit center,2,3,2–3 arbetsdagar,Uppskattning baserad på nuvarande status
+citymail,70,contains,paket har ankommit till vår terminal,0,1,Levereras mycket snart,Uppskattning baserad på nuvarande status
+citymail,72,contains,paketet har uppdaterats till turbo,0,1,Levereras mycket snart,Uppskattning baserad på nuvarande status
+citymail,75,contains,paketet förbereds för leverans,0,1,Levereras idag eller imorgon,Uppskattning baserad på nuvarande status
+citymail,90,contains,paketet har levererats hem till dig,0,0,Levererad,
+citymail,92,contains,levererad,0,0,Levererad,
+postnord,10,contains,paketinformation mottagen,8,10,8–10 arbetsdagar,Uppskattning baserad på nuvarande status
+postnord,12,contains,fraktinformation mottagen,8,10,8–10 arbetsdagar,Uppskattning baserad på nuvarande status
+postnord,15,contains,avisering mottagen från avsändaren,7,9,7–9 arbetsdagar,Uppskattning baserad på nuvarande status
+postnord,16,contains,väntar på ditt paket,7,9,7–9 arbetsdagar,Uppskattning baserad på nuvarande status
+postnord,18,contains,hämtad av transportör,7,9,7–9 arbetsdagar,Uppskattning baserad på nuvarande status
+postnord,22,contains,ankom till anläggning och registrerades,7,9,7–9 arbetsdagar,Uppskattning baserad på nuvarande status
+postnord,24,contains,lämnade anläggning för vidare transport,6,8,6–8 arbetsdagar,Uppskattning baserad på nuvarande status
+postnord,30,contains,överlämnat till flygbolag,6,8,6–8 arbetsdagar,Uppskattning baserad på nuvarande status
+postnord,35,contains,avgick från ursprungsflygplats,6,8,6–8 arbetsdagar,Uppskattning baserad på nuvarande status
+postnord,40,contains,ankom till destinationsflygplats,4,6,4–6 arbetsdagar,Uppskattning baserad på nuvarande status
+postnord,45,contains,tullklarerad,2,3,2–3 arbetsdagar,Uppskattning baserad på nuvarande status
+postnord,50,contains,ankom till transitcenter,3,4,3–4 arbetsdagar,Uppskattning baserad på nuvarande status
+postnord,52,contains,parcel outbound from transit center,3,4,3–4 arbetsdagar,Uppskattning baserad på nuvarande status
+postnord,55,contains,partner for transportation,3,4,3–4 arbetsdagar,Uppskattning baserad på nuvarande status
+postnord,56,contains,handed over to a partner,3,4,3–4 arbetsdagar,Uppskattning baserad på nuvarande status
+postnord,60,contains,ankom till destinationslandet,2,4,2–4 arbetsdagar,Uppskattning baserad på nuvarande status
+postnord,65,contains,destinationslandet,2,4,2–4 arbetsdagar,Uppskattning baserad på nuvarande status
+postnord,70,contains,försändelsen är under transport,1,3,1–3 arbetsdagar,Uppskattning baserad på nuvarande status
+postnord,78,contains,weight and dimensions on the invoice,1,3,1–3 arbetsdagar,Uppskattning baserad på nuvarande status
+postnord,80,contains,försändelsen har lastats,0,1,Levereras mycket snart,Uppskattning baserad på nuvarande status
+postnord,90,contains,delivered to the recipient's mailbox,0,0,Levererad,
+postnord,91,contains,delivered to the recipients mailbox,0,0,Levererad,
+postnord,92,contains,levererad,0,0,Levererad,
