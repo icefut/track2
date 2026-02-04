@@ -7,7 +7,7 @@ citymail,24,contains,lämnade anläggning för vidare transport,6,8,6–8 arbets
 citymail,30,contains,överlämnat till flygbolag,6,8,6–8 arbetsdagar,Uppskattning baserad på nuvarande status
 citymail,35,contains,avgick från ursprungsflygplats,6,8,6–8 arbetsdagar,Uppskattning baserad på nuvarande status
 citymail,40,contains,ankom till destinationsflygplats,4,6,4–6 arbetsdagar,Uppskattning baserad på nuvarande status
-citymail,45,contains,tullklarerad,2,3,2–3 arbetsdagar,Uppskattning baserad på nuvarande status
+citymail,45,contains,Tullklarerad,2,3,2–3 arbetsdagar,Uppskattning baserad på nuvarande status
 citymail,50,contains,ankom till transitcenter,3,4,3–4 arbetsdagar,Uppskattning baserad på nuvarande status
 citymail,55,contains,parcel outbound from transit center,2,3,2–3 arbetsdagar,Uppskattning baserad på nuvarande status
 citymail,70,contains,paket har ankommit till vår terminal,0,1,Levereras mycket snart,Uppskattning baserad på nuvarande status
@@ -25,7 +25,7 @@ postnord,24,contains,lämnade anläggning för vidare transport,6,8,6–8 arbets
 postnord,30,contains,överlämnat till flygbolag,6,8,6–8 arbetsdagar,Uppskattning baserad på nuvarande status
 postnord,35,contains,avgick från ursprungsflygplats,6,8,6–8 arbetsdagar,Uppskattning baserad på nuvarande status
 postnord,40,contains,ankom till destinationsflygplats,4,6,4–6 arbetsdagar,Uppskattning baserad på nuvarande status
-postnord,45,contains,tullklarerad,2,3,2–3 arbetsdagar,Uppskattning baserad på nuvarande status
+postnord,45,contains,Tullklarerad,2,3,2–3 arbetsdagar,Uppskattning baserad på nuvarande status
 postnord,50,contains,ankom till transitcenter,3,4,3–4 arbetsdagar,Uppskattning baserad på nuvarande status
 postnord,52,contains,parcel outbound from transit center,3,4,3–4 arbetsdagar,Uppskattning baserad på nuvarande status
 postnord,55,contains,partner for transportation,3,4,3–4 arbetsdagar,Uppskattning baserad på nuvarande status
