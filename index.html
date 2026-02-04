@@ -141,6 +141,13 @@
     .kv span { color:#6b7280; }
     .kv strong { font-weight:900; text-align:right; max-width:60%; word-break:break-word; }
 
+    .subnote{
+      margin-top:8px;
+      color:#6b7280;
+      font-size:12px;
+      line-height:1.35;
+    }
+
     .link {
       color:#2563eb;
       text-decoration:none;
@@ -244,12 +251,21 @@
             <strong id="citymailValue">Inte tilldelat ännu</strong>
           </div>
 
+          <!-- ✅ NYTT: ETA -->
+          <div class="kv">
+            <span>Beräknad leverans</span>
+            <strong id="estimatedValue">—</strong>
+          </div>
+
           <div class="kv">
             <span>Senast uppdaterad</span>
             <strong id="updatedValue">—</strong>
           </div>
 
           <div id="linksWrap" style="margin-top:10px;"></div>
+
+          <div class="subnote" id="etaNote" style="display:none;"></div>
+          <div class="subnote" id="carrierNote" style="display:none;"></div>
         </div>
 
         <div class="status-box">
@@ -286,8 +302,12 @@
     const trackingValue = document.getElementById("trackingValue");
     const postnordValue = document.getElementById("postnordValue");
     const citymailValue = document.getElementById("citymailValue");
+    const estimatedValue = document.getElementById("estimatedValue");
     const updatedValue = document.getElementById("updatedValue");
     const linksWrap = document.getElementById("linksWrap");
+
+    const etaNote = document.getElementById("etaNote");
+    const carrierNote = document.getElementById("carrierNote");
 
     const progressBar = document.getElementById("progressBar");
     const progressLabel = document.getElementById("progressLabel");
@@ -346,6 +366,16 @@
       return parts.join(" &nbsp;•&nbsp; ");
     }
 
+    function showOptionalNote(el, text){
+      if(text && String(text).trim()){
+        el.textContent = text;
+        el.style.display = "block";
+      }else{
+        el.textContent = "";
+        el.style.display = "none";
+      }
+    }
+
     async function renderResult(data){
       trackingValue.textContent = data.trackingNumber || "—";
       statusText.textContent = data.statusSwedish || data.statusMilestone || "—";
@@ -354,9 +384,23 @@
       postnordValue.textContent = data.postnordNumber || "Inte tilldelat ännu";
       citymailValue.textContent = data.citymailNumber || "Inte tilldelat ännu";
 
+      // ✅ ETA från backend
+      estimatedValue.textContent = data.estimated_delivery || "—";
+
       linksWrap.innerHTML = buildLinks(data.postnordNumber, data.citymailNumber);
 
       setProgress(data.statusMilestone);
+
+      // Liten note-text (om backend skickar)
+      showOptionalNote(etaNote, data.eta_note_sv || "");
+
+      // Diskret carrier-info (bra för debugging / support)
+      if (data.carrierDetected && data.carrierDetected !== "unknown") {
+        const label = data.carrierDetected === "postnord" ? "PostNord" : "CityMail";
+        showOptionalNote(carrierNote, `Transportör: ${label}`);
+      } else {
+        showOptionalNote(carrierNote, "");
+      }
 
       eventsEl.innerHTML = "";
       (data.events || []).forEach(ev => {
@@ -380,7 +424,6 @@
       clearError();
       trackBtn.disabled = true;
 
-      // ✅ gör länken kopierbar
       updateUrlWithTn(value);
 
       try{
@@ -404,11 +447,9 @@
       orderBtn.disabled = true;
 
       try{
-        // 🔥 använder din /api/track-order.js
         const res = await fetch(`/api/track-order?order=${encodeURIComponent(o)}&email=${encodeURIComponent(e)}`);
         const data = await res.json();
         if(!data.ok) throw new Error(data.error || "Kunde inte hitta ordern.");
-        // (kan returnera samma normalized format)
         await renderResult(data);
       }catch(err){
         showError(err.message || "Något gick fel.");
@@ -443,7 +484,7 @@
       trackByOrder(orderInput.value, emailInput.value);
     });
 
-    // ✅ Auto-run via ?tn=
+    // Auto-run via ?tn=
     (function initFromQuery(){
       const url = new URL(window.location.href);
       const tn = url.searchParams.get("tn");
@@ -453,77 +494,56 @@
       }
     })();
   </script>
-</body>
+
   <script>
-  // Översätter vanliga Ship24/transport-event från EN -> SV utan att röra funktionaliteten
-  (function () {
-    const EN_TO_SV = [
-      [/^Arrive in transit center$/i, "Ankom till transitcenter"],
-      [/^Released from customs:\s*customs cleared\.$/i, "Tullklarerad"],
-      [/^Arrival to the destination airport$/i, "Ankom till destinationsflygplats"],
-      [/^Departure from the original airport$/i, "Avgick från ursprungsflygplats"],
-      [/^Hand over to airline\.$/i, "Överlämnat till flygbolag"],
-      [/^Shipping information received$/i, "Fraktinformation mottagen"],
-      [/^Parcel information received$/i, "Paketinformation mottagen"],
-      [/^Shipment arrived at facility and measured\.$/i, "Ankom till anläggning och registrerades"],
-      [/^Shipment picked up\.$/i, "Hämtad av transportör"],
-      [/^Depart from facility to service provider\.$/i, "Lämnade anläggning för vidare transport"],
-      [/^The shipment item is under transportation\.$/i, "Försändelsen är under transport"],
-      [/^The shipment item has arrived at the country of destination\.$/i, "Ankom till destinationslandet"],
-      [/^The shipment item has been loaded\.$/i, "Försändelsen har lastats"],
-      [/^A text message notification has been sent to the recipient\.$/i, "SMS-notis har skickats till mottagaren"],
-      [/^Parcel outbound from transit center\.$/i, "Paketet har lämnat transitcentret"],
-      [/^The shipment item has been delivered at the recipient's door\.$/i, "Levererad till mottagarens dörr"],
-      [/^We have received a notification from your shipper.*$/i, "Avisering mottagen från avsändaren – uppdateras när paketet hanteras av lokal transportör"],
-    ];
+    // Översätter vanliga Ship24/transport-event från EN -> SV utan att röra funktionaliteten
+    (function () {
+      const EN_TO_SV = [
+        [/^Arrive in transit center$/i, "Ankom till transitcenter"],
+        [/^Released from customs:\s*customs cleared\.$/i, "Tullklarerad"],
+        [/^Arrival to the destination airport$/i, "Ankom till destinationsflygplats"],
+        [/^Departure from the original airport$/i, "Avgick från ursprungsflygplats"],
+        [/^Hand over to airline\.$/i, "Överlämnat till flygbolag"],
+        [/^Shipping information received$/i, "Fraktinformation mottagen"],
+        [/^Parcel information received$/i, "Paketinformation mottagen"],
+        [/^Shipment arrived at facility and measured\.$/i, "Ankom till anläggning och registrerades"],
+        [/^Shipment picked up\.$/i, "Hämtad av transportör"],
+        [/^Depart from facility to service provider\.$/i, "Lämnade anläggning för vidare transport"],
+        [/^The shipment item is under transportation\.$/i, "Försändelsen är under transport"],
+        [/^The shipment item has arrived at the country of destination\.$/i, "Ankom till destinationslandet"],
+        [/^The shipment item has been loaded\.$/i, "Försändelsen har lastats"],
+        [/^A text message notification has been sent to the recipient\.$/i, "SMS-notis har skickats till mottagaren"],
+        [/^Parcel outbound from transit center\.$/i, "Paketet har lämnat transitcentret"],
+        [/^The shipment item has been delivered at the recipient's door\.$/i, "Levererad till mottagarens dörr"],
+        [/^We have received a notification from your shipper.*$/i, "Avisering mottagen från avsändaren – uppdateras när paketet hanteras av lokal transportör"],
+      ];
 
-    function translateText(s) {
-      if (!s) return s;
-      const t = String(s).trim();
-      for (const [re, sv] of EN_TO_SV) {
-        if (re.test(t)) return sv;
-      }
-      return t;
-    }
-
-    // Försök hitta event-listan genom rubriken "Händelser" och översätt text under den
-    function translateEvents() {
-      // 1) Om du har en känd container-id, lägg den här:
-      // const container = document.getElementById("eventsList");
-
-      // 2) Robust fallback: hitta sektionen som innehåller texten "Händelser"
-      const headings = Array.from(document.querySelectorAll("h1,h2,h3,h4,div,span,strong"));
-      const h = headings.find(el => (el.textContent || "").trim().toLowerCase() === "händelser");
-      if (!h) return;
-
-      // Ta en rimlig parent/sektion runt den
-      const section = h.closest("section,div") || h.parentElement;
-      if (!section) return;
-
-      // Översätt bara "event-rader": starka rader / rubriker / statusrader
-      // (Vi rör inte inputs, knappar osv)
-      const nodes = section.querySelectorAll("strong, b, .status, .event, .event-title, .event-status, p, div, span");
-      nodes.forEach(node => {
-        // hoppa över om det är input/textarea/button
-        if (["INPUT", "TEXTAREA", "BUTTON"].includes(node.tagName)) return;
-
-        const text = (node.textContent || "").trim();
-        if (!text) return;
-
-        const translated = translateText(text);
-        if (translated !== text) {
-          node.textContent = translated;
+      function translateText(s) {
+        if (!s) return s;
+        const t = String(s).trim();
+        for (const [re, sv] of EN_TO_SV) {
+          if (re.test(t)) return sv;
         }
-      });
-    }
+        return t;
+      }
 
-    // Kör direkt + varje gång sidan uppdateras (när track.js renderar events)
-    const run = () => translateEvents();
-    run();
+      function translateEvents() {
+        // Vi översätter bara statustext i event-listan (inte inputs/knappar)
+        const nodes = document.querySelectorAll(".event-status");
+        nodes.forEach(node => {
+          const text = (node.textContent || "").trim();
+          if (!text) return;
+          const translated = translateText(text);
+          if (translated !== text) node.textContent = translated;
+        });
+      }
 
-    const obs = new MutationObserver(() => run());
-    obs.observe(document.body, { subtree: true, childList: true });
+      const run = () => translateEvents();
+      run();
 
-  })();
-</script>
+      const obs = new MutationObserver(() => run());
+      obs.observe(document.body, { subtree: true, childList: true });
+    })();
+  </script>
+</body>
 </html>
