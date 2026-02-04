@@ -269,18 +269,27 @@
         </div>
 
         <div class="status-box">
-          <div style="font-weight:900; margin-bottom:8px;">Leveransförlopp</div>
-          <div style="height:10px;border-radius:999px;background:#e5e7eb;overflow:hidden;border:1px solid #d1d5db;">
-            <div id="progressBar" style="height:100%;width:25%;background:#2563eb;"></div>
-          </div>
-          <div id="progressLabel" style="margin-top:8px;color:#4b5563;font-weight:800;">Registrerad</div>
-        </div>
-      </div>
-
-      <h3 style="margin-top:18px;">Händelser</h3>
-      <div id="events" class="timeline"></div>
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:10px;">
+    <div style="font-weight:900;">Beräknad leverans</div>
+    <div id="etaBadge" style="font-weight:900;font-size:12px;color:#065f46;background:#ecfdf5;border:1px solid #d1fae5;padding:6px 10px;border-radius:999px;">
+      —
     </div>
   </div>
+
+  <div id="etaBig" style="margin-top:10px;font-size:22px;font-weight:950;letter-spacing:-.2px;">
+    —
+  </div>
+
+  <div id="etaSmall" style="margin-top:6px;color:#6b7280;font-size:13px;line-height:1.35;">
+    Uppskattning baserad på senaste händelsen.
+  </div>
+
+  <div style="margin-top:12px;font-weight:900;">Leveransförlopp</div>
+  <div style="margin-top:8px;height:10px;border-radius:999px;background:#e5e7eb;overflow:hidden;border:1px solid #d1d5db;">
+    <div id="progressBar" style="height:100%;width:25%;background:#2563eb;"></div>
+  </div>
+  <div id="progressLabel" style="margin-top:8px;color:#4b5563;font-weight:800;">Registrerad</div>
+</div>
 
   <script>
     const tabTracking = document.getElementById("tabTracking");
@@ -308,6 +317,10 @@
 
     const etaNote = document.getElementById("etaNote");
     const carrierNote = document.getElementById("carrierNote");
+    const etaBadge = document.getElementById("etaBadge");
+    const etaBig = document.getElementById("etaBig");
+    const etaSmall = document.getElementById("etaSmall");
+
 
     const progressBar = document.getElementById("progressBar");
     const progressLabel = document.getElementById("progressLabel");
@@ -386,6 +399,24 @@
 
       // ✅ ETA från backend
       estimatedValue.textContent = data.estimated_delivery || "—";
+      // ===== HÖGRA RUTAN (ETA-KORTET) =====
+const etaText = data.estimated_delivery || "—";
+
+// Badge uppe till höger (PostNord / CityMail)
+etaBadge.textContent =
+  data.carrierDetected === "postnord" ? "PostNord" :
+  data.carrierDetected === "citymail" ? "CityMail" :
+  "—";
+
+// Stora ETA-texten
+etaBig.textContent = etaText;
+
+// Förklarande text under
+etaSmall.textContent =
+  data.eta_note_sv && String(data.eta_note_sv).trim()
+    ? data.eta_note_sv
+    : "Uppskattning baserad på senaste händelsen.";
+
 
       linksWrap.innerHTML = buildLinks(data.postnordNumber, data.citymailNumber);
 
