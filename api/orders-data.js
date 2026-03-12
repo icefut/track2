@@ -3457,7 +3457,7 @@ module.exports = [
   {
     order_number: "23437",
     email: "nevazzzz@outlook.com",
-    tracking_number: "4PX3002547668559CN Argentina Retro Hemma Tröja 2022 VM: S / Messi 10",
+    tracking_number: "4PX3002547668559CN",
   },
   {
     order_number: "23439",
@@ -3467,7 +3467,7 @@ module.exports = [
   {
     order_number: "23440",
     email: "lehem.fesshaie@gmail.com",
-    tracking_number: "4PX3002547678336CN PSG Special Edition Blå & Rosa: M / O.DEMBÉLÉ 10",
+    tracking_number: "4PX3002547678336CN",
   },
   {
     order_number: "23443",
@@ -3507,7 +3507,7 @@ module.exports = [
   {
     order_number: "23472",
     email: "johnsson76@hotmail.com",
-    tracking_number: "4PX3002556963935CN Barcelona Retro Tredje tröja 16 17: M / Inget Namn &",
+    tracking_number: "4PX3002556963935CN",
   },
   {
     order_number: "23475",
@@ -3557,17 +3557,17 @@ module.exports = [
   {
     order_number: "23511",
     email: "tonyhjwendrich@gmail.com",
-    tracking_number: "4PX3002557024031CN Bayern Munich Trejde Tröjan 24 25: L / Namn & Nummer",
+    tracking_number: "4PX3002557024031CN",
   },
   {
     order_number: "23505",
     email: "ibbetalal12@gmail.com",
-    tracking_number: "4PX3002557029999CN Manchester City Tredje Tröja 24 25: 14-15 år: XL (164 CM) /",
+    tracking_number: "4PX3002557029999CN",
   },
   {
     order_number: "23515",
     email: "bakiismail03@icloud.com",
-    tracking_number: "4PX3002557035303CN Barcelona Retro Hemma tröja 09 10: M / PUYOL 5",
+    tracking_number: "4PX3002557035303CN",
   },
   {
     order_number: "23524",
@@ -3597,7 +3597,7 @@ module.exports = [
   {
     order_number: "23552",
     email: "rivers-tabloid-4z@icloud.com",
-    tracking_number: "4PX3002563130436CN Santos Hemma Tröja 2013: XL / NEYMAR JR 11",
+    tracking_number: "4PX3002563130436CN",
   },
   {
     order_number: "23558",
@@ -3607,6 +3607,6 @@ module.exports = [
   {
     order_number: "23590",
     email: "arm.tbeast@gmail.com",
-    tracking_number: "4PX3002563134342CN Chelsea Borta Tröja 25 26 / L",
+    tracking_number: "4PX3002563134342CN",
   },
 ];
