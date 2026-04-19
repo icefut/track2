@@ -9445,6 +9445,11 @@ module.exports = [
   tracking_number: "4PX3002659264779CN",
 },
 {
+  order_number: "24001",
+  email: "isaac.jonsson0219@gmail.com",
+  tracking_number: "4PX3002668655056CN",
+},
+{
   order_number: "26126",
   email: "algotlundstrom06@gmail.com",
   tracking_number: "4PX3002659268166CN",
