@@ -252,7 +252,7 @@ module.exports = async (req, res) => {
     console.log("[ORDER_TRACK_NOT_FOUND]", { order, email });
     return res.status(404).json({
       ok: false,
-      error: "Ditt paket har ännu inte skickats. Vi arbetar för fullt med att hantera din beställning och skickar det så snart vi kan.",
+      error: "Ditt paket har ännu inte skickats. Vi arbetar för fullt med att hantera din beställning och skickar det så snart vi kan. Kontrollera även att du har skrivit rätt ordernummer och mailadress.",
     });
   }
 
