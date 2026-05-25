@@ -825,12 +825,12 @@
     }
 
     if(
-      text.includes("arrive in transit center") ||
-      text.includes("ankom till transitcenter") ||
-      text.includes("belgium") ||
-    ){
-      return ["3–5 arbetsdagar", "Paketet har ankommit till transitcenter i Europa och transporteras vidare."];
-    }
+  text.includes("arrive in transit center") ||
+  text.includes("ankom till transitcenter") ||
+  text.includes("belgium")
+){
+  return ["3–5 arbetsdagar", "Paketet har ankommit till transitcenter i Europa och transporteras vidare."];
+}
 
     if(
       text.includes("customs cleared") ||
