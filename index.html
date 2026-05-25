@@ -825,7 +825,7 @@
       text.includes("outbound from transit center") ||
       text.includes("paketet har lamnat transitcentret")
     ){
-      return ["3–6 arbetsdagar", "Paketet har lämnat transitcentret och är på väg vidare."];
+      return ["3–5 arbetsdagar", "Paketet har lämnat transitcentret och är på väg vidare."];
     }
 
     if(
@@ -834,56 +834,56 @@
       text.includes("belgium") ||
       text.includes("be")
     ){
-      return ["4–7 arbetsdagar", "Paketet har ankommit till transitcenter i Europa och transporteras vidare."];
+      return ["3–5 arbetsdagar", "Paketet har ankommit till transitcenter i Europa och transporteras vidare."];
     }
 
     if(
       text.includes("customs cleared") ||
       text.includes("tullklarerad")
     ){
-      return ["5–8 arbetsdagar", "Paketet är tullklarerat och väntar på vidare transport."];
+      return ["4–6 arbetsdagar", "Paketet är tullklarerat och väntar på vidare transport."];
     }
 
     if(
       text.includes("destination airport") ||
       text.includes("destinationsflygplats")
     ){
-      return ["6–9 arbetsdagar", "Paketet har anlänt till destinationsflygplats och fortsätter snart vidare."];
+      return ["4–6 arbetsdagar", "Paketet har anlänt till destinationsflygplats och fortsätter snart vidare."];
     }
 
     if(
       text.includes("departure from the original airport") ||
       text.includes("avgick fran ursprungsflygplats")
     ){
-      return ["7–10 arbetsdagar", "Paketet har lämnat ursprungslandet och är på väg till Europa."];
+      return ["5–7 arbetsdagar", "Paketet har lämnat ursprungslandet och är på väg till Europa."];
     }
 
     if(
       text.includes("hand over to airline") ||
       text.includes("overlamnat till flygbolag")
     ){
-      return ["8–11 arbetsdagar", "Paketet har överlämnats till flygbolag för internationell transport."];
+      return ["7–8 arbetsdagar", "Paketet har överlämnats till flygbolag för internationell transport."];
     }
 
     if(
       text.includes("depart from facility") ||
       text.includes("lamnade anlaggning")
     ){
-      return ["9–12 arbetsdagar", "Paketet har lämnat anläggningen och transporten har startat."];
+      return ["8-9 arbetsdagar", "Paketet har lämnat anläggningen och transporten har startat."];
     }
 
     if(
       text.includes("shipment arrived at facility") ||
       text.includes("ankom till anlaggning")
     ){
-      return ["10–13 arbetsdagar", "Paketet har registrerats hos transportören och bearbetas."];
+      return ["9–11 arbetsdagar", "Paketet har registrerats hos transportören och bearbetas."];
     }
 
     if(
       text.includes("shipment picked up") ||
       text.includes("hamtad av transportor")
     ){
-      return ["10–15 arbetsdagar", "Paketet har hämtats av transportören."];
+      return ["11–13 arbetsdagar", "Paketet har hämtats av transportören."];
     }
 
     if(
@@ -894,7 +894,7 @@
       text.includes("fraktinformation mottagen") ||
       text.includes("paketinformation mottagen")
     ){
-      return ["10–15 arbetsdagar", "Fraktinformation är mottagen. Paketet väntar på att börja röra sig."];
+      return ["11–13 arbetsdagar", "Fraktinformation är mottagen. Paketet väntar på att börja röra sig."];
     }
 
     if(milestone === "in_transit"){
