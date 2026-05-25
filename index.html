@@ -2,375 +2,543 @@
 <html lang="sv">
 <head>
   <meta charset="UTF-8" />
-  <title>Spåra din beställning</title>
+  <title>Spåra din beställning | ICEFOT</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+
   <style>
     :root{
-      --bg:#f3f4f6;
-      --card:#ffffff;
-      --muted:#6b7280;
-      --text:#111827;
-      --border:#e5e7eb;
-      --blue:#2563eb;
-      --green:#16a34a;
-      --greenBg:#ecfdf5;
-      --greenBorder:#d1fae5;
-      --shadow:0 12px 28px rgba(0,0,0,.06);
-      --radius:14px;
+      --bg:#050505;
+      --card:#101010;
+      --card2:#161616;
+      --text:#ffffff;
+      --muted:#a3a3a3;
+      --soft:#e5e5e5;
+      --border:#2a2a2a;
+      --green:#22c55e;
+      --yellow:#facc15;
+      --blue:#3b82f6;
+      --red:#ef4444;
+      --radius:22px;
+      --shadow:0 24px 70px rgba(0,0,0,.45);
     }
+
     *{box-sizing:border-box}
+
     body{
       margin:0;
-      padding:20px;
-      background:var(--bg);
-      font-family:system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      min-height:100vh;
+      background:
+        radial-gradient(circle at top left, rgba(59,130,246,.18), transparent 32%),
+        radial-gradient(circle at bottom right, rgba(34,197,94,.14), transparent 30%),
+        var(--bg);
+      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
       color:var(--text);
+      padding:18px;
     }
-    .wrap{
-      max-width:980px;
+
+    .page{
+      width:100%;
+      max-width:1040px;
       margin:0 auto;
-      background:var(--card);
-      border:1px solid var(--border);
-      border-radius:var(--radius);
+      padding:22px 0;
+    }
+
+    .hero{
+      background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:28px;
+      padding:24px;
       box-shadow:var(--shadow);
-      padding:22px;
-    }
-    h1{margin:0 0 8px;font-size:28px;letter-spacing:-.3px}
-    p{margin:0 0 16px;color:#4b5563}
-
-    /* Tabs */
-    .tabs{
-      display:flex;
-      gap:6px;
-      margin:14px 0 14px;
-      background:#e5e7eb;
-      padding:4px;
-      border-radius:999px;
-    }
-    .tab{
-      flex:1;
-      border:none;
-      background:transparent;
-      padding:10px 12px;
-      border-radius:999px;
-      font-weight:900;
-      cursor:pointer;
-      color:var(--text);
-      font-size:14px;
-    }
-    .tab.active{
-      background:var(--blue);
-      color:#fff;
-      box-shadow:0 10px 22px rgba(37,99,235,.22);
     }
 
-    /* Forms */
-    .row{
+    .brand{
       display:flex;
-      gap:10px;
-      flex-wrap:wrap;
+      justify-content:space-between;
       align-items:center;
+      gap:14px;
+      margin-bottom:22px;
     }
-    input[type="text"], input[type="email"]{
-      flex:1;
-      min-width:240px;
-      padding:11px 12px;
-      border-radius:12px;
-      border:1px solid #d1d5db;
-      outline:none;
-      font-size:14px;
-      background:#fff;
+
+    .logo{
+      font-weight:1000;
+      letter-spacing:.08em;
+      font-size:18px;
     }
-    input:focus{
-      border-color:var(--blue);
-      box-shadow:0 0 0 3px rgba(37,99,235,.12);
-    }
-    .btn{
-      border:none;
-      border-radius:12px;
-      padding:11px 16px;
-      background:var(--blue);
-      color:#fff;
-      font-weight:950;
-      cursor:pointer;
-      display:flex;
-      align-items:center;
-      gap:8px;
-      box-shadow:0 12px 24px rgba(37,99,235,.18);
+
+    .trust{
+      font-size:13px;
+      color:#d4d4d4;
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.12);
+      padding:8px 11px;
+      border-radius:999px;
       white-space:nowrap;
     }
-    .btn:disabled{opacity:.65;cursor:wait}
-    .hint{
-      margin-top:8px;
-      color:var(--muted);
-      font-size:13px;
-      line-height:1.35;
+
+    h1{
+      margin:0;
+      font-size:clamp(31px, 5vw, 56px);
+      line-height:.95;
+      letter-spacing:-1.8px;
     }
 
-    /* Error */
-    .error{
-      display:none;
-      margin-top:12px;
-      padding:10px 12px;
-      border-radius:12px;
-      background:#fef2f2;
-      border:1px solid #fecaca;
-      color:#b91c1c;
-      font-weight:800;
-      font-size:14px;
+    .lead{
+      margin:14px 0 0;
+      max-width:670px;
+      color:#d4d4d4;
+      font-size:16px;
+      line-height:1.55;
     }
 
-    /* Layout */
-    .grid{
-      margin-top:16px;
-      display:grid;
-      grid-template-columns:1.05fr .95fr;
-      gap:14px;
-    }
-    @media (max-width:860px){
-      .grid{grid-template-columns:1fr}
-    }
-
-    .card{
-      border:1px solid var(--border);
-      background:#f9fafb;
-      border-radius:var(--radius);
+    .searchBox{
+      margin-top:22px;
+      background:rgba(255,255,255,.07);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:24px;
       padding:14px;
     }
 
-    /* Left Card */
-    .pill{
-      display:inline-flex;
-      align-items:center;
+    .tabs{
+      display:grid;
+      grid-template-columns:1fr 1fr;
       gap:8px;
-      padding:6px 10px;
+      margin-bottom:12px;
+      background:#070707;
+      border:1px solid rgba(255,255,255,.1);
+      padding:5px;
       border-radius:999px;
-      font-size:12px;
-      font-weight:950;
-      background:var(--greenBg);
-      border:1px solid var(--greenBorder);
-      color:#065f46;
-      margin-bottom:10px;
-    }
-    .dot{
-      width:9px;height:9px;border-radius:999px;background:#22c55e;
-      box-shadow:0 0 0 3px rgba(34,197,94,.15);
-    }
-    .kv{
-      display:flex;
-      justify-content:space-between;
-      gap:12px;
-      padding:9px 0;
-      border-top:1px dashed #e5e7eb;
-    }
-    .kv:first-child{border-top:none;padding-top:0}
-    .kv span{color:var(--muted)}
-    .kv strong{font-weight:950; text-align:right; max-width:64%; word-break:break-word}
-
-    .links{
-      margin-top:10px;
-      display:flex;
-      flex-wrap:wrap;
-      gap:10px;
-    }
-    .link{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding:9px 11px;
-      border-radius:12px;
-      background:#fff;
-      border:1px solid var(--border);
-      text-decoration:none;
-      color:var(--blue);
-      font-weight:950;
-    }
-    .link:hover{box-shadow:0 10px 20px rgba(0,0,0,.05)}
-    .subnote{
-      margin-top:10px;
-      font-size:12px;
-      color:var(--muted);
-      line-height:1.35;
     }
 
-    /* Right ETA Card */
-    .etaTop{
-      display:flex;
-      justify-content:space-between;
-      gap:10px;
-      align-items:flex-end;
-    }
-    .etaTitle{font-weight:950}
-    .badge{
-      font-size:12px;
+    .tab{
+      border:0;
+      background:transparent;
+      color:#cfcfcf;
       font-weight:950;
-      padding:6px 10px;
+      padding:12px 10px;
       border-radius:999px;
-      background:var(--greenBg);
-      border:1px solid var(--greenBorder);
-      color:#065f46;
-    }
-    .etaBig{
-      margin-top:10px;
-      font-size:26px;
-      font-weight:1000;
-      letter-spacing:-.4px;
-    }
-    .etaSmall{
-      margin-top:6px;
-      color:var(--muted);
-      font-size:13px;
-      line-height:1.35;
-    }
-
-    .progressWrap{
-      margin-top:14px;
-      padding-top:12px;
-      border-top:1px solid var(--border);
-    }
-    .progressTitle{font-weight:950;margin-bottom:8px}
-    .barOuter{
-      height:10px;
-      border-radius:999px;
-      background:#e5e7eb;
-      overflow:hidden;
-      border:1px solid #d1d5db;
-    }
-    .barInner{
-      height:100%;
-      width:25%;
-      background:var(--blue);
-    }
-    .barLabel{
-      margin-top:8px;
-      color:#4b5563;
-      font-weight:900;
+      cursor:pointer;
       font-size:14px;
     }
 
-    /* Timeline */
-    h3{margin:18px 0 10px}
-    .timeline{
-      border-left:2px solid var(--blue);
-      padding-left:18px;
-      margin-top:6px;
+    .tab.active{
+      background:#fff;
+      color:#050505;
     }
+
+    .form{display:block}
+    .hidden{display:none!important}
+
+    .row{
+      display:grid;
+      grid-template-columns:1fr auto;
+      gap:10px;
+    }
+
+    .row.two{
+      grid-template-columns:1fr 1fr auto;
+    }
+
+    input{
+      width:100%;
+      border:1px solid rgba(255,255,255,.13);
+      background:#080808;
+      color:#fff;
+      border-radius:16px;
+      padding:15px 15px;
+      font-size:15px;
+      outline:none;
+    }
+
+    input::placeholder{color:#777}
+
+    input:focus{
+      border-color:#fff;
+      box-shadow:0 0 0 4px rgba(255,255,255,.08);
+    }
+
+    .btn{
+      border:0;
+      background:#fff;
+      color:#050505;
+      border-radius:16px;
+      padding:0 20px;
+      font-size:15px;
+      font-weight:1000;
+      cursor:pointer;
+      white-space:nowrap;
+      min-height:52px;
+    }
+
+    .btn:disabled{
+      opacity:.65;
+      cursor:wait;
+    }
+
+    .hint{
+      margin-top:10px;
+      color:#aaa;
+      font-size:13px;
+      line-height:1.45;
+    }
+
+    .error{
+      margin-top:14px;
+      display:none;
+      background:rgba(239,68,68,.12);
+      border:1px solid rgba(239,68,68,.3);
+      color:#fecaca;
+      border-radius:18px;
+      padding:14px;
+      font-weight:750;
+      line-height:1.45;
+    }
+
+    .results{
+      margin-top:18px;
+      display:none;
+    }
+
+    .statusHero{
+      background:#fff;
+      color:#050505;
+      border-radius:26px;
+      padding:20px;
+      display:grid;
+      grid-template-columns:1fr auto;
+      gap:18px;
+      align-items:center;
+      margin-bottom:14px;
+    }
+
+    .statusOverline{
+      font-size:12px;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+      color:#525252;
+      font-weight:1000;
+      margin-bottom:7px;
+    }
+
+    .statusTitle{
+      font-size:25px;
+      font-weight:1000;
+      letter-spacing:-.5px;
+      margin-bottom:7px;
+    }
+
+    .statusDesc{
+      color:#525252;
+      font-size:14px;
+      line-height:1.45;
+    }
+
+    .statusIcon{
+      width:58px;
+      height:58px;
+      border-radius:20px;
+      background:#050505;
+      color:#fff;
+      display:grid;
+      place-items:center;
+      font-size:26px;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:14px;
+    }
+
+    .card{
+      background:rgba(255,255,255,.07);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:24px;
+      padding:18px;
+    }
+
+    .cardTitle{
+      font-size:16px;
+      font-weight:1000;
+      margin-bottom:14px;
+    }
+
+    .kv{
+      display:flex;
+      justify-content:space-between;
+      gap:14px;
+      padding:11px 0;
+      border-top:1px solid rgba(255,255,255,.09);
+    }
+
+    .kv:first-of-type{border-top:0;padding-top:0}
+
+    .kv span{
+      color:#aaa;
+      font-size:14px;
+    }
+
+    .kv strong{
+      font-size:14px;
+      text-align:right;
+      max-width:62%;
+      word-break:break-word;
+    }
+
+    .links{
+      display:flex;
+      flex-wrap:wrap;
+      gap:9px;
+      margin-top:13px;
+    }
+
+    .link{
+      display:inline-flex;
+      align-items:center;
+      gap:7px;
+      background:#fff;
+      color:#050505;
+      text-decoration:none;
+      border-radius:14px;
+      padding:11px 13px;
+      font-weight:1000;
+      font-size:14px;
+    }
+
+    .mutedBox{
+      color:#aaa;
+      font-size:13px;
+      line-height:1.45;
+      background:rgba(255,255,255,.06);
+      border:1px dashed rgba(255,255,255,.14);
+      border-radius:16px;
+      padding:12px;
+      margin-top:12px;
+    }
+
+    .etaBig{
+      font-size:25px;
+      font-weight:1000;
+      letter-spacing:-.4px;
+      margin-bottom:8px;
+    }
+
+    .etaSmall{
+      color:#aaa;
+      font-size:14px;
+      line-height:1.45;
+    }
+
+    .steps{
+      margin-top:18px;
+    }
+
+    .bar{
+      height:12px;
+      background:#2a2a2a;
+      border-radius:999px;
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.12);
+    }
+
+    .barInner{
+      height:100%;
+      width:20%;
+      background:#fff;
+      border-radius:999px;
+      transition:.35s ease;
+    }
+
+    .stepLabels{
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:7px;
+      margin-top:10px;
+      color:#888;
+      font-size:12px;
+      font-weight:800;
+      text-align:center;
+    }
+
+    .stepLabels .active{color:#fff}
+
+    .timelineWrap{
+      margin-top:14px;
+      background:rgba(255,255,255,.07);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:24px;
+      padding:18px;
+    }
+
+    .timeline{
+      border-left:2px solid rgba(255,255,255,.22);
+      padding-left:18px;
+    }
+
     .event{
       position:relative;
-      margin-bottom:16px;
+      padding-bottom:17px;
     }
+
+    .event:last-child{padding-bottom:0}
+
     .event::before{
       content:"";
       position:absolute;
-      left:-20px;
-      top:3px;
+      left:-24px;
+      top:4px;
       width:10px;
       height:10px;
-      border-radius:999px;
-      background:var(--blue);
-      border:2px solid #fff;
-      box-shadow:0 0 0 2px var(--blue);
+      background:#fff;
+      border-radius:50%;
+      box-shadow:0 0 0 5px #111;
     }
-    .event-time{font-size:13px;color:var(--muted)}
-    .event-status{font-size:14px;font-weight:950}
-    .event-location{font-size:13px;color:#4b5563}
 
-    .hidden{display:none}
+    .eventTime{
+      color:#aaa;
+      font-size:13px;
+      margin-bottom:3px;
+    }
+
+    .eventStatus{
+      font-weight:1000;
+      font-size:15px;
+      line-height:1.35;
+    }
+
+    .eventLocation{
+      color:#bdbdbd;
+      font-size:13px;
+      margin-top:3px;
+    }
+
+    .emptyEvents{
+      color:#aaa;
+      font-size:14px;
+      line-height:1.45;
+    }
+
+    @media(max-width:760px){
+      body{padding:10px}
+      .hero{padding:18px;border-radius:24px}
+      .brand{align-items:flex-start}
+      .trust{font-size:12px}
+      .row,.row.two{grid-template-columns:1fr}
+      .btn{width:100%;justify-content:center}
+      .statusHero{grid-template-columns:1fr}
+      .statusIcon{display:none}
+      .grid{grid-template-columns:1fr}
+      .tabs{grid-template-columns:1fr}
+      .stepLabels{font-size:11px}
+    }
   </style>
 </head>
 
 <body>
-  <div class="wrap">
-    <h1>Spåra din beställning</h1>
-    <p>Spåra med ditt 4PX-spårningsnummer eller med ordernummer + e-post.</p>
-
-    <div class="tabs">
-      <button class="tab active" id="tabTracking" type="button">Spårningsnummer</button>
-      <button class="tab" id="tabOrder" type="button">Ordernummer + e-post</button>
-    </div>
-
-    <!-- TRACKING FORM -->
-    <form id="trackForm">
-      <div class="row">
-        <input type="text" id="trackingInput" placeholder="T.ex. 4PX..., BC...CN" autocomplete="off" />
-        <button type="submit" class="btn" id="trackBtn">🔎 Spåra</button>
+  <main class="page">
+    <section class="hero">
+      <div class="brand">
+        <div class="logo">ICEFOT</div>
+        <div class="trust">Svensk support • Ingen tullavgift</div>
       </div>
-      <div class="hint">
-    
-      </div>
-    </form>
 
-    <!-- ORDER FORM -->
-    <form id="orderForm" class="hidden">
-      <div class="row">
-        <input type="text" id="orderInput" placeholder="Ordernummer, t.ex. 22700" autocomplete="off" />
-        <input type="email" id="emailInput" placeholder="E-post som användes vid beställning" autocomplete="off" />
-        <button type="submit" class="btn" id="orderBtn">🔎 Spåra</button>
-      </div>
-      <div class="hint">Ange ditt ordernummer och samma e-postadress som du använde vid beställningen.</div>
-    </form>
+      <h1>Spåra din beställning</h1>
+      <p class="lead">
+        Här kan du följa din beställning med spårningsnummer eller med ordernummer och e-post.
+        Spårningen kan ibland ta några dagar innan den börjar uppdateras.
+      </p>
 
-    <div id="errorBox" class="error"></div>
-
-    <!-- RESULTS -->
-    <div id="resultArea" class="hidden">
-      <div class="grid">
-        <!-- LEFT: TECH INFO -->
-        <div class="card">
-          <div class="pill"><span class="dot"></span><span id="statusText">—</span></div>
-
-          <div class="kv">
-            <span>Spårningsnummer</span>
-            <strong id="trackingValue">—</strong>
-          </div>
-
-          <div class="kv">
-            <span>PostNord-nummer</span>
-            <strong id="postnordValue">Inte tilldelat ännu</strong>
-          </div>
-
-          <div class="kv">
-            <span>CityMail-nummer</span>
-            <strong id="citymailValue">Inte tilldelat ännu</strong>
-          </div>
-
-          <div class="kv">
-            <span>Senast uppdaterad</span>
-            <strong id="updatedValue">—</strong>
-          </div>
-
-          <div class="links" id="linksWrap"></div>
-
-          <div class="subnote" id="carrierNote" style="display:none;"></div>
+      <div class="searchBox">
+        <div class="tabs">
+          <button class="tab active" id="tabTracking" type="button">Spårningsnummer</button>
+          <button class="tab" id="tabOrder" type="button">Ordernummer + e-post</button>
         </div>
 
-        <!-- RIGHT: ETA + PROGRESS -->
-        <div class="card">
-          <div class="etaTop">
-            <div class="etaTitle">Beräknad leverans</div>
-            <div class="badge" id="etaBadge">—</div>
+        <form id="trackForm" class="form">
+          <div class="row">
+            <input id="trackingInput" type="text" placeholder="Skriv ditt spårningsnummer" autocomplete="off" />
+            <button class="btn" id="trackBtn" type="submit">Spåra paket</button>
           </div>
+          <div class="hint">Exempel: 4PX, LZ, 999 eller annat spårningsnummer du fått via e-post.</div>
+        </form>
 
-          <div class="etaBig" id="etaBig">—</div>
-          <div class="etaSmall" id="etaSmall">Uppskattning baserad på senaste händelsen.</div>
+        <form id="orderForm" class="form hidden">
+          <div class="row two">
+            <input id="orderInput" type="text" placeholder="Ordernummer, t.ex. 22700" autocomplete="off" />
+            <input id="emailInput" type="email" placeholder="E-post från beställningen" autocomplete="off" />
+            <button class="btn" id="orderBtn" type="submit">Spåra order</button>
+          </div>
+          <div class="hint">Använd samma e-postadress som du skrev när du beställde.</div>
+        </form>
 
-          <div class="progressWrap">
-            <div class="progressTitle">Leveransförlopp</div>
-            <div class="barOuter">
-              <div class="barInner" id="progressBar"></div>
+        <div id="errorBox" class="error"></div>
+      </div>
+
+      <div id="resultArea" class="results">
+        <div class="statusHero">
+          <div>
+            <div class="statusOverline" id="statusOverline">Orderstatus</div>
+            <div class="statusTitle" id="statusTitle">—</div>
+            <div class="statusDesc" id="statusDesc">—</div>
+          </div>
+          <div class="statusIcon" id="statusIcon">📦</div>
+        </div>
+
+        <div class="grid">
+          <div class="card">
+            <div class="cardTitle">Spårningsinformation</div>
+
+            <div class="kv">
+              <span>Spårningsnummer</span>
+              <strong id="trackingValue">—</strong>
             </div>
-            <div class="barLabel" id="progressLabel">Registrerad</div>
+
+            <div class="kv">
+              <span>PostNord</span>
+              <strong id="postnordValue">Inte tilldelat ännu</strong>
+            </div>
+
+            <div class="kv">
+              <span>CityMail</span>
+              <strong id="citymailValue">Inte tilldelat ännu</strong>
+            </div>
+
+            <div class="kv">
+              <span>Senast uppdaterad</span>
+              <strong id="updatedValue">—</strong>
+            </div>
+
+            <div class="links" id="linksWrap"></div>
+            <div class="mutedBox" id="carrierNote">När paketet får ett lokalt spårningsnummer visas länk till PostNord eller CityMail här.</div>
+          </div>
+
+          <div class="card">
+            <div class="cardTitle">Beräknad leverans</div>
+            <div class="etaBig" id="etaBig">—</div>
+            <div class="etaSmall" id="etaSmall">Uppskattning baserad på senaste händelsen.</div>
+
+            <div class="steps">
+              <div class="bar">
+                <div class="barInner" id="progressBar"></div>
+              </div>
+              <div class="stepLabels">
+                <div id="s1">Registrerad</div>
+                <div id="s2">På väg</div>
+                <div id="s3">Ute för leverans</div>
+                <div id="s4">Levererad</div>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
 
-      <h3>Händelser</h3>
-      <div class="timeline" id="events"></div>
-    </div>
-  </div>
+        <div class="timelineWrap">
+          <div class="cardTitle">Händelser</div>
+          <div class="timeline" id="events"></div>
+        </div>
+      </div>
+    </section>
+  </main>
 
   <script>
-    // Elements
     const tabTracking = document.getElementById("tabTracking");
     const tabOrder = document.getElementById("tabOrder");
     const trackForm = document.getElementById("trackForm");
@@ -386,7 +554,11 @@
     const errorBox = document.getElementById("errorBox");
     const resultArea = document.getElementById("resultArea");
 
-    const statusText = document.getElementById("statusText");
+    const statusOverline = document.getElementById("statusOverline");
+    const statusTitle = document.getElementById("statusTitle");
+    const statusDesc = document.getElementById("statusDesc");
+    const statusIcon = document.getElementById("statusIcon");
+
     const trackingValue = document.getElementById("trackingValue");
     const postnordValue = document.getElementById("postnordValue");
     const citymailValue = document.getElementById("citymailValue");
@@ -395,46 +567,90 @@
     const linksWrap = document.getElementById("linksWrap");
     const carrierNote = document.getElementById("carrierNote");
 
-    const etaBadge = document.getElementById("etaBadge");
     const etaBig = document.getElementById("etaBig");
     const etaSmall = document.getElementById("etaSmall");
-
     const progressBar = document.getElementById("progressBar");
-    const progressLabel = document.getElementById("progressLabel");
+
+    const stepEls = [
+      document.getElementById("s1"),
+      document.getElementById("s2"),
+      document.getElementById("s3"),
+      document.getElementById("s4")
+    ];
 
     const eventsEl = document.getElementById("events");
 
-    // Helpers
-    function showError(msg){
-      errorBox.textContent = msg;
-      errorBox.style.display = "block";
-      resultArea.classList.add("hidden");
+    const translations = [
+      [/^Arrive in transit center$/i, "Ankom till transitcenter"],
+      [/^Released from customs:\s*customs cleared\.$/i, "Tullklarerad"],
+      [/^Arrival to the destination airport$/i, "Ankom till destinationsflygplats"],
+      [/^Departure from the original airport$/i, "Avgick från ursprungsflygplats"],
+      [/^Hand over to airline\.$/i, "Överlämnat till flygbolag"],
+      [/^Shipping information received$/i, "Fraktinformation mottagen"],
+      [/^Parcel information received$/i, "Paketinformation mottagen"],
+      [/^Shipment arrived at facility and measured\.$/i, "Ankom till anläggning och registrerades"],
+      [/^Shipment picked up\.$/i, "Hämtad av transportör"],
+      [/^Depart from facility to service provider\.$/i, "Lämnade anläggning för vidare transport"],
+      [/^The shipment item is under transportation\.$/i, "Försändelsen är under transport"],
+      [/^The shipment item has arrived at the country of destination\.$/i, "Ankom till destinationslandet"],
+      [/^The shipment item has been loaded\.$/i, "Försändelsen har lastats"],
+      [/^A text message notification has been sent to the recipient\.$/i, "SMS-notis har skickats till mottagaren"],
+      [/^Parcel outbound from transit center\.$/i, "Paketet har lämnat transitcentret"],
+      [/^The shipment item has been delivered at the recipient's door\.$/i, "Levererad till mottagarens dörr"],
+      [/^We have received a notification from your shipper.*$/i, "Avisering mottagen från avsändaren – uppdateras när paketet hanteras av lokal transportör"]
+    ];
+
+    function translateStatus(text){
+      if(!text) return "";
+      const clean = String(text).trim();
+      for(const [regex, sv] of translations){
+        if(regex.test(clean)) return sv;
+      }
+      return clean;
     }
+
+    function formatDate(value){
+      if(!value) return "—";
+      const d = new Date(value);
+      if(isNaN(d.getTime())) return value;
+      return d.toLocaleString("sv-SE", {
+        year:"numeric",
+        month:"short",
+        day:"numeric",
+        hour:"2-digit",
+        minute:"2-digit"
+      });
+    }
+
+    function showError(message){
+      errorBox.innerHTML = `
+        ${message || "Något gick fel."}<br>
+        <span style="font-weight:600;color:#fecaca;">
+          Ditt paket har kanske ännu inte skickats, eller så har du skrivit fel ordernummer/e-post.
+          Kontrollera uppgifterna och testa igen.
+        </span>
+      `;
+      errorBox.style.display = "block";
+      resultArea.style.display = "none";
+    }
+
     function clearError(){
       errorBox.style.display = "none";
       errorBox.textContent = "";
     }
-    function showResult(){
-      resultArea.classList.remove("hidden");
-    }
 
-    function formatDate(dt){
-      if(!dt) return "—";
-      const d = new Date(dt);
-      if(isNaN(d.getTime())) return dt;
-      return d.toLocaleString("sv-SE");
-    }
-
-    function setProgress(milestone){
-      let pct=25, label="Registrerad";
-      const m = (milestone || "").toString().toLowerCase();
-      if(m === "pending" || m === "info_received"){ pct=25; label="Registrerad"; }
-      else if(m === "in_transit"){ pct=55; label="På väg"; }
-      else if(m === "out_for_delivery"){ pct=80; label="Ute för leverans"; }
-      else if(m === "available_for_pickup"){ pct=90; label="Klar för upphämtning"; }
-      else if(m === "delivered"){ pct=100; label="Levererad"; }
-      progressBar.style.width = pct + "%";
-      progressLabel.textContent = label;
+    function setTab(mode){
+      if(mode === "order"){
+        tabOrder.classList.add("active");
+        tabTracking.classList.remove("active");
+        orderForm.classList.remove("hidden");
+        trackForm.classList.add("hidden");
+      }else{
+        tabTracking.classList.add("active");
+        tabOrder.classList.remove("active");
+        trackForm.classList.remove("hidden");
+        orderForm.classList.add("hidden");
+      }
     }
 
     function updateUrlWithTn(tn){
@@ -443,198 +659,194 @@
       window.history.replaceState({}, "", url.toString());
     }
 
-    function buildLinks(postnord, citymail){
-      const parts = [];
-      if(postnord){
-        parts.push(`<a class="link" href="https://www.postnord.se/vara-verktyg/spara-brev-paket-och-pall/?shipmentId=${encodeURIComponent(postnord)}?" target="_blank" rel="noopener noreferrer">📦 Öppna i PostNord</a>`);
-      }
-      if(citymail){
-        parts.push(`<a class="link" href="https://tracking.citymail.se/?search=${encodeURIComponent(citymail)}" target="_blank" rel="noopener noreferrer">📫 Öppna i CityMail</a>`);
-      }
-      if(parts.length === 0){
-        return `<span style="color:#6b7280;font-size:13px;">När lokalt spårningsnummer skapas kan du öppna det här.</span>`;
-      }
-      return parts.join("");
+    function getProgress(milestone){
+      const m = String(milestone || "").toLowerCase();
+
+      if(m === "delivered") return { pct:100, step:4, title:"Paketet är levererat", desc:"Din beställning har levererats.", icon:"✅" };
+      if(m === "out_for_delivery") return { pct:82, step:3, title:"Paketet är ute för leverans", desc:"Din beställning är nära och bör levereras snart.", icon:"🚚" };
+      if(m === "available_for_pickup") return { pct:90, step:3, title:"Paketet är redo att hämtas", desc:"Paketet finns troligen hos ombud eller utlämningsställe.", icon:"📍" };
+      if(m === "in_transit") return { pct:58, step:2, title:"Paketet är på väg", desc:"Din beställning är skickad och transporteras just nu.", icon:"✈️" };
+      if(m === "pending" || m === "info_received") return { pct:25, step:1, title:"Spårningen är registrerad", desc:"Fraktinformation har skapats. Det kan ta lite tid innan paketet börjar röra sig.", icon:"📦" };
+
+      return { pct:35, step:1, title:"Spårning hittad", desc:"Vi har hittat din försändelse. Se senaste händelserna nedan.", icon:"📦" };
     }
 
-    function setCarrierNote(carrier){
-      if(carrier === "postnord"){
-        carrierNote.style.display = "block";
-        carrierNote.textContent = "Transportör: PostNord";
-      } else if(carrier === "citymail"){
-        carrierNote.style.display = "block";
-        carrierNote.textContent = "Transportör: CityMail";
-      } else {
-        carrierNote.style.display = "none";
-        carrierNote.textContent = "";
+    function setProgressUI(info){
+      progressBar.style.width = info.pct + "%";
+      stepEls.forEach((el, index) => {
+        el.classList.toggle("active", index < info.step);
+      });
+    }
+
+    function buildLinks(postnord, citymail){
+      const links = [];
+
+      if(postnord){
+        links.push(`
+          <a class="link" href="https://www.postnord.se/vara-verktyg/spara-brev-paket-och-pall?shipmentId=${encodeURIComponent(postnord)}" target="_blank" rel="noopener noreferrer">
+            📦 Öppna i PostNord
+          </a>
+        `);
+      }
+
+      if(citymail){
+        links.push(`
+          <a class="link" href="https://tracking.citymail.se/?search=${encodeURIComponent(citymail)}" target="_blank" rel="noopener noreferrer">
+            📫 Öppna i CityMail
+          </a>
+        `);
+      }
+
+      if(!links.length){
+        return "";
+      }
+
+      return links.join("");
+    }
+
+    function renderCarrierNote(data){
+      if(data.carrierDetected === "postnord"){
+        carrierNote.textContent = "Transportör: PostNord. Klicka på knappen ovan för att följa paketet direkt hos PostNord.";
+      }else if(data.carrierDetected === "citymail"){
+        carrierNote.textContent = "Transportör: CityMail. Klicka på knappen ovan för att följa paketet direkt hos CityMail.";
+      }else{
+        carrierNote.textContent = "När paketet får ett lokalt spårningsnummer visas länk till PostNord eller CityMail här.";
       }
     }
 
     async function renderResult(data){
-      // Left tech
-      trackingValue.textContent = data.trackingNumber || "—";
-      statusText.textContent = data.statusSwedish || data.statusMilestone || "—";
-      updatedValue.textContent = formatDate(data.lastUpdate);
+      const progress = getProgress(data.statusMilestone);
 
+      statusOverline.textContent = data.statusSwedish || data.statusMilestone || "Orderstatus";
+      statusTitle.textContent = progress.title;
+      statusDesc.textContent = progress.desc;
+      statusIcon.textContent = progress.icon;
+
+      trackingValue.textContent = data.trackingNumber || "—";
       postnordValue.textContent = data.postnordNumber || "Inte tilldelat ännu";
       citymailValue.textContent = data.citymailNumber || "Inte tilldelat ännu";
+      updatedValue.textContent = formatDate(data.lastUpdate);
 
       linksWrap.innerHTML = buildLinks(data.postnordNumber, data.citymailNumber);
-      setCarrierNote(data.carrierDetected);
+      renderCarrierNote(data);
 
-      // Right ETA
-      const etaText = data.estimated_delivery || "—";
-      etaBig.textContent = etaText;
-      etaSmall.textContent =
-        data.eta_note_sv && String(data.eta_note_sv).trim()
-          ? data.eta_note_sv
-          : "Uppskattning baserad på senaste händelsen.";
+      etaBig.textContent = data.estimated_delivery || "Inte tillgängligt ännu";
+      etaSmall.textContent = data.eta_note_sv && String(data.eta_note_sv).trim()
+        ? data.eta_note_sv
+        : "Leveransprognosen uppdateras när transportören skickar nya händelser.";
 
-      etaBadge.textContent =
-        data.carrierDetected === "postnord" ? "PostNord" :
-        data.carrierDetected === "citymail" ? "CityMail" :
-        "—";
+      setProgressUI(progress);
 
-      // Progress
-      setProgress(data.statusMilestone);
-
-      // Events
       eventsEl.innerHTML = "";
-      (data.events || []).forEach(ev => {
-        const div = document.createElement("div");
-        div.className = "event";
-        div.innerHTML = `
-          <div class="event-time">${formatDate(ev.datetime)}</div>
-          <div class="event-status">${(ev.status || "-")}</div>
-          <div class="event-location">${(ev.location || "")}</div>
-        `;
-        eventsEl.appendChild(div);
-      });
 
-      showResult();
+      const events = Array.isArray(data.events) ? data.events : [];
+
+      if(!events.length){
+        eventsEl.innerHTML = `
+          <div class="emptyEvents">
+            Inga detaljerade händelser finns ännu. Detta är vanligt när paketet nyligen har skickats.
+          </div>
+        `;
+      }else{
+        events.forEach(ev => {
+          const div = document.createElement("div");
+          div.className = "event";
+
+          div.innerHTML = `
+            <div class="eventTime">${formatDate(ev.datetime)}</div>
+            <div class="eventStatus">${translateStatus(ev.status || "-")}</div>
+            <div class="eventLocation">${ev.location || ""}</div>
+          `;
+
+          eventsEl.appendChild(div);
+        });
+      }
+
+      resultArea.style.display = "block";
     }
 
     async function trackByTrackingNumber(tn){
-      const value = (tn || "").trim();
-      if(!value) return;
+      const value = String(tn || "").trim();
+      if(!value){
+        showError("Skriv in ett spårningsnummer först.");
+        return;
+      }
 
       clearError();
       trackBtn.disabled = true;
+      trackBtn.textContent = "Söker...";
 
       updateUrlWithTn(value);
 
       try{
         const res = await fetch(`/api/track?value=${encodeURIComponent(value)}&mode=tracking`);
         const data = await res.json();
-        if(!data.ok) throw new Error(data.error || "Kunde inte hitta försändelsen.");
+
+        if(!data.ok){
+          throw new Error(data.error || "Vi kunde inte hitta försändelsen just nu.");
+        }
+
         await renderResult(data);
       }catch(err){
-        showError(err.message || "Något gick fel.");
+        showError(err.message || "Vi kunde inte hämta spårningen just nu.");
       }finally{
         trackBtn.disabled = false;
+        trackBtn.textContent = "Spåra paket";
       }
     }
 
     async function trackByOrder(order, email){
-      const o = (order || "").trim();
-      const e = (email || "").trim();
-      if(!o || !e) return;
+      const o = String(order || "").trim();
+      const e = String(email || "").trim();
+
+      if(!o || !e){
+        showError("Skriv in både ordernummer och e-postadress.");
+        return;
+      }
 
       clearError();
       orderBtn.disabled = true;
+      orderBtn.textContent = "Söker...";
 
       try{
         const res = await fetch(`/api/track-order?order=${encodeURIComponent(o)}&email=${encodeURIComponent(e)}`);
         const data = await res.json();
-        if(!data.ok) throw new Error(data.error || "Kunde inte hitta ordern.");
+
+        if(!data.ok){
+          throw new Error(data.error || "Vi kunde inte hitta ordern just nu.");
+        }
+
         await renderResult(data);
       }catch(err){
-        showError(err.message || "Något gick fel.");
+        showError(err.message || "Vi kunde inte hämta ordern just nu.");
       }finally{
         orderBtn.disabled = false;
+        orderBtn.textContent = "Spåra order";
       }
     }
 
-    // Tabs
-    tabTracking.addEventListener("click", () => {
-      tabTracking.classList.add("active");
-      tabOrder.classList.remove("active");
-      trackForm.classList.remove("hidden");
-      orderForm.classList.add("hidden");
-    });
+    tabTracking.addEventListener("click", () => setTab("tracking"));
+    tabOrder.addEventListener("click", () => setTab("order"));
 
-    tabOrder.addEventListener("click", () => {
-      tabOrder.classList.add("active");
-      tabTracking.classList.remove("active");
-      orderForm.classList.remove("hidden");
-      trackForm.classList.add("hidden");
-    });
-
-    // Submit handlers
-    trackForm.addEventListener("submit", (e) => {
+    trackForm.addEventListener("submit", e => {
       e.preventDefault();
       trackByTrackingNumber(trackingInput.value);
     });
 
-    orderForm.addEventListener("submit", (e) => {
+    orderForm.addEventListener("submit", e => {
       e.preventDefault();
       trackByOrder(orderInput.value, emailInput.value);
     });
 
-    // Auto-run via ?tn=
-    (function initFromQuery(){
+    (function init(){
       const url = new URL(window.location.href);
       const tn = url.searchParams.get("tn");
+
       if(tn){
+        setTab("tracking");
         trackingInput.value = tn;
         trackByTrackingNumber(tn);
       }
-    })();
-  </script>
-
-  <script>
-    // EN -> SV översättning för event-status (UI)
-    (function () {
-      const EN_TO_SV = [
-        [/^Arrive in transit center$/i, "Ankom till transitcenter"],
-        [/^Released from customs:\s*customs cleared\.$/i, "Tullklarerad"],
-        [/^Arrival to the destination airport$/i, "Ankom till destinationsflygplats"],
-        [/^Departure from the original airport$/i, "Avgick från ursprungsflygplats"],
-        [/^Hand over to airline\.$/i, "Överlämnat till flygbolag"],
-        [/^Shipping information received$/i, "Fraktinformation mottagen"],
-        [/^Parcel information received$/i, "Paketinformation mottagen"],
-        [/^Shipment arrived at facility and measured\.$/i, "Ankom till anläggning och registrerades"],
-        [/^Shipment picked up\.$/i, "Hämtad av transportör"],
-        [/^Depart from facility to service provider\.$/i, "Lämnade anläggning för vidare transport"],
-        [/^The shipment item is under transportation\.$/i, "Försändelsen är under transport"],
-        [/^The shipment item has arrived at the country of destination\.$/i, "Ankom till destinationslandet"],
-        [/^The shipment item has been loaded\.$/i, "Försändelsen har lastats"],
-        [/^A text message notification has been sent to the recipient\.$/i, "SMS-notis har skickats till mottagaren"],
-        [/^Parcel outbound from transit center\.$/i, "Paketet har lämnat transitcentret"],
-        [/^The shipment item has been delivered at the recipient's door\.$/i, "Levererad till mottagarens dörr"],
-        [/^We have received a notification from your shipper.*$/i, "Avisering mottagen från avsändaren – uppdateras när paketet hanteras av lokal transportör"],
-      ];
-
-      function translateText(s) {
-        if (!s) return s;
-        const t = String(s).trim();
-        for (const [re, sv] of EN_TO_SV) if (re.test(t)) return sv;
-        return t;
-      }
-
-      function translateEvents() {
-        const nodes = document.querySelectorAll(".event-status");
-        nodes.forEach(node => {
-          const text = (node.textContent || "").trim();
-          if (!text) return;
-          const translated = translateText(text);
-          if (translated !== text) node.textContent = translated;
-        });
-      }
-
-      translateEvents();
-      const obs = new MutationObserver(() => translateEvents());
-      obs.observe(document.body, { subtree: true, childList: true });
     })();
   </script>
 </body>
