@@ -724,8 +724,6 @@
     }
 
     if(
-      text.includes("sweden") ||
-      text.includes("sverige") ||
       text.includes("alvesta") ||
       text.includes("malmo") ||
       text.includes("karlskrona") ||
@@ -806,9 +804,7 @@
 
     if(
   text.includes("arrived at the country of destination") ||
-  text.includes("ankom till destinationslandet") ||
-  text.includes("sweden") ||
-  text.includes("sverige")
+  text.includes("ankom till destinationslandet")
 ){
   return ["3–4 arbetsdagar", "Paketet har anlänt till Sverige och väntar på lokal hantering."];
 }
