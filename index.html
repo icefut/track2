@@ -538,7 +538,7 @@
     </section>
   </main>
 
-  <script>
+ <script>
   const tabTracking = document.getElementById("tabTracking");
   const tabOrder = document.getElementById("tabOrder");
   const trackForm = document.getElementById("trackForm");
@@ -580,19 +580,30 @@
 
   const eventsEl = document.getElementById("events");
 
+  function normalizeText(text){
+    return String(text || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+  }
+
+  function allEventsText(data){
+    return normalizeText(JSON.stringify(data.events || []));
+  }
+
   function translateStatus(text){
     if(!text) return "";
     const t = String(text).trim();
 
     const list = [
-      [/^Parcel outbound from transit center$/i, "Paketet har lämnat transitcentret"],
-      [/^Arrive in transit center$/i, "Ankom till transitcenter"],
-      [/^Released from customs:\s*customs cleared\.$/i, "Tullklarerad"],
-      [/^Arrival to the destination airport$/i, "Ankom till destinationsflygplats"],
-      [/^Departure from the original airport$/i, "Avgick från ursprungsflygplats"],
+      [/^Parcel outbound from transit center\.?$/i, "Paketet har lämnat transitcentret"],
+      [/^Arrive in transit center\.?$/i, "Ankom till transitcenter"],
+      [/^Released from customs:\s*customs cleared\.?$/i, "Tullklarerad"],
+      [/^Arrival to the destination airport\.?$/i, "Ankom till destinationsflygplats"],
+      [/^Departure from the original airport\.?$/i, "Avgick från ursprungsflygplats"],
       [/^Hand over to airline\.?$/i, "Överlämnat till flygbolag"],
-      [/^Shipping information received$/i, "Fraktinformation mottagen"],
-      [/^Parcel information received$/i, "Paketinformation mottagen"],
+      [/^Shipping information received\.?$/i, "Fraktinformation mottagen"],
+      [/^Parcel information received\.?$/i, "Paketinformation mottagen"],
       [/^Shipment arrived at facility and measured\.?$/i, "Ankom till anläggning och registrerades"],
       [/^Shipment picked up\.?$/i, "Hämtad av transportör"],
       [/^Depart from facility to service provider\.?$/i, "Lämnade anläggning för vidare transport"],
@@ -601,6 +612,10 @@
       [/^The shipment item has been loaded\.?$/i, "Försändelsen har lastats"],
       [/^A text message notification has been sent to the recipient\.?$/i, "SMS-notis har skickats till mottagaren"],
       [/^The shipment item has been delivered at the recipient's door\.?$/i, "Paketet har levererats hem till dig"],
+      [/^The shipment item has been delivered to the recipient'?s mailbox\.?$/i, "Paketet har levererats till mottagarens brevlåda"],
+      [/^The shipment item has been delivered to the recipients mailbox\.?$/i, "Paketet har levererats till mottagarens brevlåda"],
+      [/^Your item is being processed at our sorting center\.?$/i, "Paketet sorteras hos transportören"],
+      [/^The shipment item has been handed over to a partner for transportation to the final destination\.?$/i, "Paketet har lämnats över till lokal transportör för slutleverans"],
       [/^We have received a notification from your shipper.*$/i, "Vi har fått en beställning på en leverans och väntar på paketet"]
     ];
 
@@ -615,6 +630,7 @@
     if(!value) return "—";
     const d = new Date(value);
     if(isNaN(d.getTime())) return value;
+
     return d.toLocaleString("sv-SE", {
       year:"numeric",
       month:"short",
@@ -662,86 +678,223 @@
   }
 
   function getProgress(data){
-    const milestone = String(data.statusMilestone || "").toLowerCase();
-    const eventsText = JSON.stringify(data.events || []).toLowerCase();
+    const milestone = normalizeText(data.statusMilestone);
+    const text = allEventsText(data);
 
-    if(milestone === "delivered" || eventsText.includes("levererats") || eventsText.includes("delivered")){
-      return { pct:100, step:4, title:"Paketet är levererat", desc:"Din beställning har levererats.", icon:"✅" };
+    if(
+      milestone === "delivered" ||
+      text.includes("levererats") ||
+      text.includes("delivered")
+    ){
+      return {
+        pct:100,
+        step:4,
+        title:"Paketet är levererat",
+        desc:"Din beställning har levererats.",
+        icon:"✅"
+      };
     }
 
-    if(milestone === "out_for_delivery" || eventsText.includes("ute för leverans")){
-      return { pct:82, step:3, title:"Paketet är ute för leverans", desc:"Din beställning är nära och bör levereras snart.", icon:"🚚" };
+    if(
+      milestone === "out_for_delivery" ||
+      text.includes("ute for leverans") ||
+      text.includes("forbereds for leverans")
+    ){
+      return {
+        pct:85,
+        step:3,
+        title:"Paketet förbereds för leverans",
+        desc:"Paketet är nära och bör levereras snart.",
+        icon:"🚚"
+      };
     }
 
-    if(milestone === "available_for_pickup"){
-      return { pct:90, step:3, title:"Paketet är redo att hämtas", desc:"Paketet finns troligen hos ombud eller utlämningsställe.", icon:"📍" };
+    if(
+      milestone === "available_for_pickup" ||
+      text.includes("ready for pickup") ||
+      text.includes("klar for upphamtning")
+    ){
+      return {
+        pct:90,
+        step:3,
+        title:"Paketet är redo att hämtas",
+        desc:"Paketet finns troligen hos ombud eller utlämningsställe.",
+        icon:"📍"
+      };
     }
 
-    if(eventsText.includes("förbereds för leverans") || eventsText.includes("sweden")){
-      return { pct:78, step:3, title:"Paketet förbereds för leverans", desc:"Paketet är i Sverige och väntar på lokal leverans.", icon:"🇸🇪" };
+    if(
+      text.includes("sweden") ||
+      text.includes("sverige") ||
+      text.includes("alvesta") ||
+      text.includes("malmo") ||
+      text.includes("karlskrona") ||
+      text.includes("gnesta") ||
+      text.includes("brevterminal") ||
+      text.includes("sorting center")
+    ){
+      return {
+        pct:78,
+        step:3,
+        title:"Paketet är i Sverige",
+        desc:"Paketet hanteras av lokal transportör och är nära leverans.",
+        icon:"🇸🇪"
+      };
     }
 
-    if(milestone === "in_transit" || eventsText.includes("transit") || eventsText.includes("flygbolag")){
-      return { pct:58, step:2, title:"Paketet är på väg", desc:"Din beställning är skickad och transporteras just nu.", icon:"✈️" };
+    if(
+      milestone === "in_transit" ||
+      text.includes("transit") ||
+      text.includes("flygbolag") ||
+      text.includes("airline") ||
+      text.includes("destination airport") ||
+      text.includes("destinationsflygplats")
+    ){
+      return {
+        pct:58,
+        step:2,
+        title:"Paketet är på väg",
+        desc:"Din beställning är skickad och transporteras just nu.",
+        icon:"✈️"
+      };
     }
 
-    return { pct:25, step:1, title:"Spårningen är registrerad", desc:"Fraktinformation har skapats. Det kan ta lite tid innan paketet börjar röra sig.", icon:"📦" };
+    return {
+      pct:25,
+      step:1,
+      title:"Spårningen är registrerad",
+      desc:"Fraktinformation har skapats. Det kan ta lite tid innan paketet börjar röra sig.",
+      icon:"📦"
+    };
   }
 
   function getSmartEta(data){
-    const milestone = String(data.statusMilestone || "").toLowerCase();
-    const eventsText = JSON.stringify(data.events || []).toLowerCase();
+    const milestone = normalizeText(data.statusMilestone);
+    const text = allEventsText(data);
 
-    if(milestone === "delivered" || eventsText.includes("levererats") || eventsText.includes("delivered")){
-      return ["Levererad", "Paketet har levererats hem till dig."];
+    if(
+      milestone === "delivered" ||
+      text.includes("levererats") ||
+      text.includes("delivered")
+    ){
+      return ["Levererad", "Paketet har levererats till mottagaren."];
     }
 
-    if(milestone === "out_for_delivery" || eventsText.includes("ute för leverans")){
+    if(
+      milestone === "out_for_delivery" ||
+      text.includes("ute for leverans")
+    ){
       return ["Idag", "Paketet är ute för leverans och bör levereras under dagen."];
     }
 
-    if(eventsText.includes("förbereds för leverans") || eventsText.includes("sweden")){
+    if(
+      text.includes("forbereds for leverans")
+    ){
       return ["1–2 arbetsdagar", "Paketet är i Sverige och förbereds för leverans."];
     }
 
-    if(eventsText.includes("parcel outbound from transit center") || eventsText.includes("outbound from transit center")){
-      return ["2–4 arbetsdagar", "Paketet har lämnat transitcentret och är på väg mot Sverige."];
+    if(
+      text.includes("processed at our sorting center") ||
+      text.includes("sorting center") ||
+      text.includes("brevterminal") ||
+      text.includes("alvesta") ||
+      text.includes("malmo") ||
+      text.includes("karlskrona")
+    ){
+      return ["1–3 arbetsdagar", "Paketet hanteras av lokal transportör i Sverige."];
     }
 
-    if(eventsText.includes("ankom till transitcenter") || eventsText.includes("arrive in transit center") || eventsText.includes("be")){
-      return ["3–6 arbetsdagar", "Paketet har ankommit till transitcenter i Europa och transporteras vidare."];
+    if(
+      text.includes("arrived at the country of destination") ||
+      text.includes("ankom till destinationslandet") ||
+      text.includes("sweden") ||
+      text.includes("sverige")
+    ){
+      return ["2–4 arbetsdagar", "Paketet har anlänt till Sverige och väntar på lokal hantering."];
     }
 
-    if(eventsText.includes("tullklarerad") || eventsText.includes("customs cleared")){
-      return ["4–7 arbetsdagar", "Paketet är tullklarerat och väntar på vidare transport."];
+    if(
+      text.includes("handed over to a partner") ||
+      text.includes("partner for transportation")
+    ){
+      return ["2–5 arbetsdagar", "Paketet har lämnats över till lokal transportör för slutleverans."];
     }
 
-    if(eventsText.includes("destinationsflygplats") || eventsText.includes("destination airport")){
-      return ["5–8 arbetsdagar", "Paketet har anlänt till destinationsflygplats och fortsätter snart vidare."];
+    if(
+      text.includes("parcel outbound from transit center") ||
+      text.includes("outbound from transit center") ||
+      text.includes("paketet har lamnat transitcentret")
+    ){
+      return ["3–6 arbetsdagar", "Paketet har lämnat transitcentret och är på väg vidare."];
     }
 
-    if(eventsText.includes("avgick från ursprungsflygplats") || eventsText.includes("departure from the original airport")){
-      return ["6–9 arbetsdagar", "Paketet har lämnat ursprungslandet och är på väg till Europa."];
+    if(
+      text.includes("arrive in transit center") ||
+      text.includes("ankom till transitcenter") ||
+      text.includes("belgium") ||
+      text.includes("be")
+    ){
+      return ["4–7 arbetsdagar", "Paketet har ankommit till transitcenter i Europa och transporteras vidare."];
     }
 
-    if(eventsText.includes("överlämnat till flygbolag") || eventsText.includes("hand over to airline")){
-      return ["7–10 arbetsdagar", "Paketet har överlämnats till flygbolag för internationell transport."];
+    if(
+      text.includes("customs cleared") ||
+      text.includes("tullklarerad")
+    ){
+      return ["5–8 arbetsdagar", "Paketet är tullklarerat och väntar på vidare transport."];
     }
 
-    if(eventsText.includes("lämnade anläggning") || eventsText.includes("depart from facility")){
-      return ["8–11 arbetsdagar", "Paketet har lämnat anläggningen och transporten har startat."];
+    if(
+      text.includes("destination airport") ||
+      text.includes("destinationsflygplats")
+    ){
+      return ["6–9 arbetsdagar", "Paketet har anlänt till destinationsflygplats och fortsätter snart vidare."];
     }
 
-    if(eventsText.includes("ankom till anläggning") || eventsText.includes("shipment arrived at facility")){
-      return ["9–12 arbetsdagar", "Paketet har registrerats hos transportören och bearbetas."];
+    if(
+      text.includes("departure from the original airport") ||
+      text.includes("avgick fran ursprungsflygplats")
+    ){
+      return ["7–10 arbetsdagar", "Paketet har lämnat ursprungslandet och är på väg till Europa."];
     }
 
-    if(eventsText.includes("hämtad av transportör") || eventsText.includes("shipment picked up")){
-      return ["10–13 arbetsdagar", "Paketet har hämtats av transportören."];
+    if(
+      text.includes("hand over to airline") ||
+      text.includes("overlamnat till flygbolag")
+    ){
+      return ["8–11 arbetsdagar", "Paketet har överlämnats till flygbolag för internationell transport."];
     }
 
-    if(eventsText.includes("väntar på paketet") || eventsText.includes("information received") || eventsText.includes("parcel information received")){
-      return ["10–15 arbetsdagar", "Vi har fått en beställning på leverans och väntar på att paketet ska börja röra sig."];
+    if(
+      text.includes("depart from facility") ||
+      text.includes("lamnade anlaggning")
+    ){
+      return ["9–12 arbetsdagar", "Paketet har lämnat anläggningen och transporten har startat."];
+    }
+
+    if(
+      text.includes("shipment arrived at facility") ||
+      text.includes("ankom till anlaggning")
+    ){
+      return ["10–13 arbetsdagar", "Paketet har registrerats hos transportören och bearbetas."];
+    }
+
+    if(
+      text.includes("shipment picked up") ||
+      text.includes("hamtad av transportor")
+    ){
+      return ["10–15 arbetsdagar", "Paketet har hämtats av transportören."];
+    }
+
+    if(
+      text.includes("waiting for the parcel") ||
+      text.includes("vantar pa paketet") ||
+      text.includes("information received") ||
+      text.includes("parcel information received") ||
+      text.includes("fraktinformation mottagen") ||
+      text.includes("paketinformation mottagen")
+    ){
+      return ["10–15 arbetsdagar", "Fraktinformation är mottagen. Paketet väntar på att börja röra sig."];
     }
 
     if(milestone === "in_transit"){
@@ -753,6 +906,7 @@
 
   function setProgressUI(info){
     progressBar.style.width = info.pct + "%";
+
     stepEls.forEach((el, index) => {
       el.classList.toggle("active", index < info.step);
     });
