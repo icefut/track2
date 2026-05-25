@@ -736,7 +736,7 @@
       return {
         pct:78,
         step:3,
-        title:"Paketet är i Sverige",
+        title:"Paketet är nära Sverige",
         desc:"Paketet hanteras av lokal transportör och är nära leverans.",
         icon:"🇸🇪"
       };
@@ -805,13 +805,13 @@
     }
 
     if(
-      text.includes("arrived at the country of destination") ||
-      text.includes("ankom till destinationslandet") ||
-      text.includes("sweden") ||
-      text.includes("sverige")
-    ){
-      return ["1–3 arbetsdagar", "Paketet har anlänt till Sverige och väntar på lokal hantering."];
-    }
+  text.includes("arrived at the country of destination") ||
+  text.includes("ankom till destinationslandet") ||
+  text.includes("sweden") ||
+  text.includes("sverige")
+){
+  return ["3–4 arbetsdagar", "Paketet har anlänt till Sverige och väntar på lokal hantering."];
+}
 
     if(
       text.includes("handed over to a partner") ||
