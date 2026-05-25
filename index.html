@@ -681,6 +681,25 @@
     const milestone = normalizeText(data.statusMilestone);
     const text = allEventsText(data);
 
+    // SVERIGE TERMINAL
+  if(
+    text.includes("terminal malmo") ||
+    text.includes("terminal malmö") ||
+    text.includes("paket har ankommit till var terminal") ||
+    text.includes("paketet har ankommit till var terminal") ||
+    text.includes("brevterminal") ||
+    text.includes("alvesta") ||
+    text.includes("karlskrona")
+  ){
+    return {
+      pct:85,
+      step:3,
+      title:"Paketet är i Sverige",
+      desc:"Paketet hanteras av lokal transportör och är nära leverans.",
+      icon:"🇸🇪"
+    };
+  }
+
     if(
       milestone === "delivered" ||
       text.includes("levererats") ||
