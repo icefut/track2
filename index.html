@@ -567,287 +567,390 @@
     const linksWrap = document.getElementById("linksWrap");
     const carrierNote = document.getElementById("carrierNote");
 
-    const etaBig = document.getElementById("etaBig");
-    const etaSmall = document.getElementById("etaSmall");
-    const progressBar = document.getElementById("progressBar");
+    <script>
+  const tabTracking = document.getElementById("tabTracking");
+  const tabOrder = document.getElementById("tabOrder");
+  const trackForm = document.getElementById("trackForm");
+  const orderForm = document.getElementById("orderForm");
 
-    const stepEls = [
-      document.getElementById("s1"),
-      document.getElementById("s2"),
-      document.getElementById("s3"),
-      document.getElementById("s4")
-    ];
+  const trackingInput = document.getElementById("trackingInput");
+  const orderInput = document.getElementById("orderInput");
+  const emailInput = document.getElementById("emailInput");
 
-    const eventsEl = document.getElementById("events");
+  const trackBtn = document.getElementById("trackBtn");
+  const orderBtn = document.getElementById("orderBtn");
 
-    const translations = [
+  const errorBox = document.getElementById("errorBox");
+  const resultArea = document.getElementById("resultArea");
+
+  const statusOverline = document.getElementById("statusOverline");
+  const statusTitle = document.getElementById("statusTitle");
+  const statusDesc = document.getElementById("statusDesc");
+  const statusIcon = document.getElementById("statusIcon");
+
+  const trackingValue = document.getElementById("trackingValue");
+  const postnordValue = document.getElementById("postnordValue");
+  const citymailValue = document.getElementById("citymailValue");
+  const updatedValue = document.getElementById("updatedValue");
+
+  const linksWrap = document.getElementById("linksWrap");
+  const carrierNote = document.getElementById("carrierNote");
+
+  const etaBig = document.getElementById("etaBig");
+  const etaSmall = document.getElementById("etaSmall");
+  const progressBar = document.getElementById("progressBar");
+
+  const stepEls = [
+    document.getElementById("s1"),
+    document.getElementById("s2"),
+    document.getElementById("s3"),
+    document.getElementById("s4")
+  ];
+
+  const eventsEl = document.getElementById("events");
+
+  function translateStatus(text){
+    if(!text) return "";
+    const t = String(text).trim();
+
+    const list = [
+      [/^Parcel outbound from transit center$/i, "Paketet har lämnat transitcentret"],
       [/^Arrive in transit center$/i, "Ankom till transitcenter"],
       [/^Released from customs:\s*customs cleared\.$/i, "Tullklarerad"],
       [/^Arrival to the destination airport$/i, "Ankom till destinationsflygplats"],
       [/^Departure from the original airport$/i, "Avgick från ursprungsflygplats"],
-      [/^Hand over to airline\.$/i, "Överlämnat till flygbolag"],
+      [/^Hand over to airline\.?$/i, "Överlämnat till flygbolag"],
       [/^Shipping information received$/i, "Fraktinformation mottagen"],
       [/^Parcel information received$/i, "Paketinformation mottagen"],
-      [/^Shipment arrived at facility and measured\.$/i, "Ankom till anläggning och registrerades"],
-      [/^Shipment picked up\.$/i, "Hämtad av transportör"],
-      [/^Depart from facility to service provider\.$/i, "Lämnade anläggning för vidare transport"],
-      [/^The shipment item is under transportation\.$/i, "Försändelsen är under transport"],
-      [/^The shipment item has arrived at the country of destination\.$/i, "Ankom till destinationslandet"],
-      [/^The shipment item has been loaded\.$/i, "Försändelsen har lastats"],
-      [/^A text message notification has been sent to the recipient\.$/i, "SMS-notis har skickats till mottagaren"],
-      [/^Parcel outbound from transit center\.$/i, "Paketet har lämnat transitcentret"],
-      [/^The shipment item has been delivered at the recipient's door\.$/i, "Levererad till mottagarens dörr"],
-      [/^We have received a notification from your shipper.*$/i, "Avisering mottagen från avsändaren – uppdateras när paketet hanteras av lokal transportör"]
+      [/^Shipment arrived at facility and measured\.?$/i, "Ankom till anläggning och registrerades"],
+      [/^Shipment picked up\.?$/i, "Hämtad av transportör"],
+      [/^Depart from facility to service provider\.?$/i, "Lämnade anläggning för vidare transport"],
+      [/^The shipment item is under transportation\.?$/i, "Försändelsen är under transport"],
+      [/^The shipment item has arrived at the country of destination\.?$/i, "Ankom till destinationslandet"],
+      [/^The shipment item has been loaded\.?$/i, "Försändelsen har lastats"],
+      [/^A text message notification has been sent to the recipient\.?$/i, "SMS-notis har skickats till mottagaren"],
+      [/^The shipment item has been delivered at the recipient's door\.?$/i, "Paketet har levererats hem till dig"],
+      [/^We have received a notification from your shipper.*$/i, "Vi har fått en beställning på en leverans och väntar på paketet"]
     ];
 
-    function translateStatus(text){
-      if(!text) return "";
-      const clean = String(text).trim();
-      for(const [regex, sv] of translations){
-        if(regex.test(clean)) return sv;
-      }
-      return clean;
+    for(const [re, sv] of list){
+      if(re.test(t)) return sv;
     }
 
-    function formatDate(value){
-      if(!value) return "—";
-      const d = new Date(value);
-      if(isNaN(d.getTime())) return value;
-      return d.toLocaleString("sv-SE", {
-        year:"numeric",
-        month:"short",
-        day:"numeric",
-        hour:"2-digit",
-        minute:"2-digit"
-      });
+    return t;
+  }
+
+  function formatDate(value){
+    if(!value) return "—";
+    const d = new Date(value);
+    if(isNaN(d.getTime())) return value;
+    return d.toLocaleString("sv-SE", {
+      year:"numeric",
+      month:"short",
+      day:"numeric",
+      hour:"2-digit",
+      minute:"2-digit"
+    });
+  }
+
+  function showError(message){
+    errorBox.innerHTML = `
+      ${message || "Något gick fel."}<br>
+      <span style="font-weight:600;color:#fecaca;">
+        Ditt paket har kanske ännu inte skickats, eller så har du skrivit fel ordernummer/e-post.
+        Kontrollera uppgifterna och testa igen.
+      </span>
+    `;
+    errorBox.style.display = "block";
+    resultArea.style.display = "none";
+  }
+
+  function clearError(){
+    errorBox.style.display = "none";
+    errorBox.textContent = "";
+  }
+
+  function setTab(mode){
+    if(mode === "order"){
+      tabOrder.classList.add("active");
+      tabTracking.classList.remove("active");
+      orderForm.classList.remove("hidden");
+      trackForm.classList.add("hidden");
+    }else{
+      tabTracking.classList.add("active");
+      tabOrder.classList.remove("active");
+      trackForm.classList.remove("hidden");
+      orderForm.classList.add("hidden");
+    }
+  }
+
+  function updateUrlWithTn(tn){
+    const url = new URL(window.location.href);
+    url.searchParams.set("tn", tn);
+    window.history.replaceState({}, "", url.toString());
+  }
+
+  function getProgress(data){
+    const milestone = String(data.statusMilestone || "").toLowerCase();
+    const eventsText = JSON.stringify(data.events || []).toLowerCase();
+
+    if(milestone === "delivered" || eventsText.includes("levererats") || eventsText.includes("delivered")){
+      return { pct:100, step:4, title:"Paketet är levererat", desc:"Din beställning har levererats.", icon:"✅" };
     }
 
-    function showError(message){
-      errorBox.innerHTML = `
-        ${message || "Något gick fel."}<br>
-        <span style="font-weight:600;color:#fecaca;">
-          Ditt paket har kanske ännu inte skickats, eller så har du skrivit fel ordernummer/e-post.
-          Kontrollera uppgifterna och testa igen.
-        </span>
+    if(milestone === "out_for_delivery" || eventsText.includes("ute för leverans")){
+      return { pct:82, step:3, title:"Paketet är ute för leverans", desc:"Din beställning är nära och bör levereras snart.", icon:"🚚" };
+    }
+
+    if(milestone === "available_for_pickup"){
+      return { pct:90, step:3, title:"Paketet är redo att hämtas", desc:"Paketet finns troligen hos ombud eller utlämningsställe.", icon:"📍" };
+    }
+
+    if(eventsText.includes("förbereds för leverans") || eventsText.includes("sweden")){
+      return { pct:78, step:3, title:"Paketet förbereds för leverans", desc:"Paketet är i Sverige och väntar på lokal leverans.", icon:"🇸🇪" };
+    }
+
+    if(milestone === "in_transit" || eventsText.includes("transit") || eventsText.includes("flygbolag")){
+      return { pct:58, step:2, title:"Paketet är på väg", desc:"Din beställning är skickad och transporteras just nu.", icon:"✈️" };
+    }
+
+    return { pct:25, step:1, title:"Spårningen är registrerad", desc:"Fraktinformation har skapats. Det kan ta lite tid innan paketet börjar röra sig.", icon:"📦" };
+  }
+
+  function getSmartEta(data){
+    const milestone = String(data.statusMilestone || "").toLowerCase();
+    const eventsText = JSON.stringify(data.events || []).toLowerCase();
+
+    if(milestone === "delivered" || eventsText.includes("levererats") || eventsText.includes("delivered")){
+      return ["Levererad", "Paketet har levererats hem till dig."];
+    }
+
+    if(milestone === "out_for_delivery" || eventsText.includes("ute för leverans")){
+      return ["Idag", "Paketet är ute för leverans och bör levereras under dagen."];
+    }
+
+    if(eventsText.includes("förbereds för leverans") || eventsText.includes("sweden")){
+      return ["1–2 arbetsdagar", "Paketet är i Sverige och förbereds för leverans."];
+    }
+
+    if(eventsText.includes("parcel outbound from transit center") || eventsText.includes("outbound from transit center")){
+      return ["2–4 arbetsdagar", "Paketet har lämnat transitcentret och är på väg mot Sverige."];
+    }
+
+    if(eventsText.includes("ankom till transitcenter") || eventsText.includes("arrive in transit center") || eventsText.includes("be")){
+      return ["3–6 arbetsdagar", "Paketet har ankommit till transitcenter i Europa och transporteras vidare."];
+    }
+
+    if(eventsText.includes("tullklarerad") || eventsText.includes("customs cleared")){
+      return ["4–7 arbetsdagar", "Paketet är tullklarerat och väntar på vidare transport."];
+    }
+
+    if(eventsText.includes("destinationsflygplats") || eventsText.includes("destination airport")){
+      return ["5–8 arbetsdagar", "Paketet har anlänt till destinationsflygplats och fortsätter snart vidare."];
+    }
+
+    if(eventsText.includes("avgick från ursprungsflygplats") || eventsText.includes("departure from the original airport")){
+      return ["6–9 arbetsdagar", "Paketet har lämnat ursprungslandet och är på väg till Europa."];
+    }
+
+    if(eventsText.includes("överlämnat till flygbolag") || eventsText.includes("hand over to airline")){
+      return ["7–10 arbetsdagar", "Paketet har överlämnats till flygbolag för internationell transport."];
+    }
+
+    if(eventsText.includes("lämnade anläggning") || eventsText.includes("depart from facility")){
+      return ["8–11 arbetsdagar", "Paketet har lämnat anläggningen och transporten har startat."];
+    }
+
+    if(eventsText.includes("ankom till anläggning") || eventsText.includes("shipment arrived at facility")){
+      return ["9–12 arbetsdagar", "Paketet har registrerats hos transportören och bearbetas."];
+    }
+
+    if(eventsText.includes("hämtad av transportör") || eventsText.includes("shipment picked up")){
+      return ["10–13 arbetsdagar", "Paketet har hämtats av transportören."];
+    }
+
+    if(eventsText.includes("väntar på paketet") || eventsText.includes("information received") || eventsText.includes("parcel information received")){
+      return ["10–15 arbetsdagar", "Vi har fått en beställning på leverans och väntar på att paketet ska börja röra sig."];
+    }
+
+    if(milestone === "in_transit"){
+      return ["6–10 arbetsdagar", "Paketet är under transport."];
+    }
+
+    return ["8–12 arbetsdagar", "Leveransprognosen uppdateras automatiskt när nya händelser registreras."];
+  }
+
+  function setProgressUI(info){
+    progressBar.style.width = info.pct + "%";
+    stepEls.forEach((el, index) => {
+      el.classList.toggle("active", index < info.step);
+    });
+  }
+
+  function buildLinks(postnord, citymail){
+    const links = [];
+
+    if(postnord){
+      links.push(`
+        <a class="link" href="https://www.postnord.se/vara-verktyg/spara-brev-paket-och-pall?shipmentId=${encodeURIComponent(postnord)}" target="_blank" rel="noopener noreferrer">
+          📦 Öppna i PostNord
+        </a>
+      `);
+    }
+
+    if(citymail){
+      links.push(`
+        <a class="link" href="https://tracking.citymail.se/?search=${encodeURIComponent(citymail)}" target="_blank" rel="noopener noreferrer">
+          📫 Öppna i CityMail
+        </a>
+      `);
+    }
+
+    return links.join("");
+  }
+
+  function renderCarrierNote(data){
+    if(data.carrierDetected === "postnord"){
+      carrierNote.textContent = "Transportör: PostNord. Klicka på knappen ovan för att följa paketet direkt hos PostNord.";
+    }else if(data.carrierDetected === "citymail"){
+      carrierNote.textContent = "Transportör: CityMail. Klicka på knappen ovan för att följa paketet direkt hos CityMail.";
+    }else{
+      carrierNote.textContent = "När paketet får ett lokalt spårningsnummer visas länk till PostNord eller CityMail här.";
+    }
+  }
+
+  async function renderResult(data){
+    const progress = getProgress(data);
+    const eta = getSmartEta(data);
+
+    statusOverline.textContent = data.statusSwedish || data.statusMilestone || "Orderstatus";
+    statusTitle.textContent = progress.title;
+    statusDesc.textContent = progress.desc;
+    statusIcon.textContent = progress.icon;
+
+    trackingValue.textContent = data.trackingNumber || "—";
+    postnordValue.textContent = data.postnordNumber || "Inte tilldelat ännu";
+    citymailValue.textContent = data.citymailNumber || "Inte tilldelat ännu";
+    updatedValue.textContent = formatDate(data.lastUpdate);
+
+    linksWrap.innerHTML = buildLinks(data.postnordNumber, data.citymailNumber);
+    renderCarrierNote(data);
+
+    etaBig.textContent = eta[0];
+    etaSmall.textContent = eta[1];
+
+    setProgressUI(progress);
+
+    eventsEl.innerHTML = "";
+
+    const events = Array.isArray(data.events) ? data.events : [];
+
+    if(!events.length){
+      eventsEl.innerHTML = `
+        <div class="emptyEvents">
+          Inga detaljerade händelser finns ännu. Detta är vanligt när paketet nyligen har skickats.
+        </div>
       `;
-      errorBox.style.display = "block";
-      resultArea.style.display = "none";
-    }
+    }else{
+      events.forEach(ev => {
+        const div = document.createElement("div");
+        div.className = "event";
 
-    function clearError(){
-      errorBox.style.display = "none";
-      errorBox.textContent = "";
-    }
+        div.innerHTML = `
+          <div class="eventTime">${formatDate(ev.datetime)}</div>
+          <div class="eventStatus">${translateStatus(ev.status || "-")}</div>
+          <div class="eventLocation">${ev.location || ""}</div>
+        `;
 
-    function setTab(mode){
-      if(mode === "order"){
-        tabOrder.classList.add("active");
-        tabTracking.classList.remove("active");
-        orderForm.classList.remove("hidden");
-        trackForm.classList.add("hidden");
-      }else{
-        tabTracking.classList.add("active");
-        tabOrder.classList.remove("active");
-        trackForm.classList.remove("hidden");
-        orderForm.classList.add("hidden");
-      }
-    }
-
-    function updateUrlWithTn(tn){
-      const url = new URL(window.location.href);
-      url.searchParams.set("tn", tn);
-      window.history.replaceState({}, "", url.toString());
-    }
-
-    function getProgress(milestone){
-      const m = String(milestone || "").toLowerCase();
-
-      if(m === "delivered") return { pct:100, step:4, title:"Paketet är levererat", desc:"Din beställning har levererats.", icon:"✅" };
-      if(m === "out_for_delivery") return { pct:82, step:3, title:"Paketet är ute för leverans", desc:"Din beställning är nära och bör levereras snart.", icon:"🚚" };
-      if(m === "available_for_pickup") return { pct:90, step:3, title:"Paketet är redo att hämtas", desc:"Paketet finns troligen hos ombud eller utlämningsställe.", icon:"📍" };
-      if(m === "in_transit") return { pct:58, step:2, title:"Paketet är på väg", desc:"Din beställning är skickad och transporteras just nu.", icon:"✈️" };
-      if(m === "pending" || m === "info_received") return { pct:25, step:1, title:"Spårningen är registrerad", desc:"Fraktinformation har skapats. Det kan ta lite tid innan paketet börjar röra sig.", icon:"📦" };
-
-      return { pct:35, step:1, title:"Spårning hittad", desc:"Vi har hittat din försändelse. Se senaste händelserna nedan.", icon:"📦" };
-    }
-
-    function setProgressUI(info){
-      progressBar.style.width = info.pct + "%";
-      stepEls.forEach((el, index) => {
-        el.classList.toggle("active", index < info.step);
+        eventsEl.appendChild(div);
       });
     }
 
-    function buildLinks(postnord, citymail){
-      const links = [];
+    resultArea.style.display = "block";
+  }
 
-      if(postnord){
-        links.push(`
-          <a class="link" href="https://www.postnord.se/vara-verktyg/spara-brev-paket-och-pall?shipmentId=${encodeURIComponent(postnord)}" target="_blank" rel="noopener noreferrer">
-            📦 Öppna i PostNord
-          </a>
-        `);
-      }
+  async function trackByTrackingNumber(tn){
+    const value = String(tn || "").trim();
 
-      if(citymail){
-        links.push(`
-          <a class="link" href="https://tracking.citymail.se/?search=${encodeURIComponent(citymail)}" target="_blank" rel="noopener noreferrer">
-            📫 Öppna i CityMail
-          </a>
-        `);
-      }
-
-      if(!links.length){
-        return "";
-      }
-
-      return links.join("");
+    if(!value){
+      showError("Skriv in ett spårningsnummer först.");
+      return;
     }
 
-    function renderCarrierNote(data){
-      if(data.carrierDetected === "postnord"){
-        carrierNote.textContent = "Transportör: PostNord. Klicka på knappen ovan för att följa paketet direkt hos PostNord.";
-      }else if(data.carrierDetected === "citymail"){
-        carrierNote.textContent = "Transportör: CityMail. Klicka på knappen ovan för att följa paketet direkt hos CityMail.";
-      }else{
-        carrierNote.textContent = "När paketet får ett lokalt spårningsnummer visas länk till PostNord eller CityMail här.";
+    clearError();
+    trackBtn.disabled = true;
+    trackBtn.textContent = "Söker...";
+
+    updateUrlWithTn(value);
+
+    try{
+      const res = await fetch(`/api/track?value=${encodeURIComponent(value)}&mode=tracking`);
+      const data = await res.json();
+
+      if(!data.ok){
+        throw new Error(data.error || "Vi kunde inte hitta försändelsen just nu.");
       }
+
+      await renderResult(data);
+    }catch(err){
+      showError(err.message || "Vi kunde inte hämta spårningen just nu.");
+    }finally{
+      trackBtn.disabled = false;
+      trackBtn.textContent = "Spåra paket";
+    }
+  }
+
+  async function trackByOrder(order, email){
+    const o = String(order || "").trim();
+    const e = String(email || "").trim();
+
+    if(!o || !e){
+      showError("Skriv in både ordernummer och e-postadress.");
+      return;
     }
 
-    async function renderResult(data){
-      const progress = getProgress(data.statusMilestone);
+    clearError();
+    orderBtn.disabled = true;
+    orderBtn.textContent = "Söker...";
 
-      statusOverline.textContent = data.statusSwedish || data.statusMilestone || "Orderstatus";
-      statusTitle.textContent = progress.title;
-      statusDesc.textContent = progress.desc;
-      statusIcon.textContent = progress.icon;
+    try{
+      const res = await fetch(`/api/track-order?order=${encodeURIComponent(o)}&email=${encodeURIComponent(e)}`);
+      const data = await res.json();
 
-      trackingValue.textContent = data.trackingNumber || "—";
-      postnordValue.textContent = data.postnordNumber || "Inte tilldelat ännu";
-      citymailValue.textContent = data.citymailNumber || "Inte tilldelat ännu";
-      updatedValue.textContent = formatDate(data.lastUpdate);
-
-      linksWrap.innerHTML = buildLinks(data.postnordNumber, data.citymailNumber);
-      renderCarrierNote(data);
-
-      etaBig.textContent = data.estimated_delivery || "Inte tillgängligt ännu";
-      etaSmall.textContent = data.eta_note_sv && String(data.eta_note_sv).trim()
-        ? data.eta_note_sv
-        : "Leveransprognosen uppdateras när transportören skickar nya händelser.";
-
-      setProgressUI(progress);
-
-      eventsEl.innerHTML = "";
-
-      const events = Array.isArray(data.events) ? data.events : [];
-
-      if(!events.length){
-        eventsEl.innerHTML = `
-          <div class="emptyEvents">
-            Inga detaljerade händelser finns ännu. Detta är vanligt när paketet nyligen har skickats.
-          </div>
-        `;
-      }else{
-        events.forEach(ev => {
-          const div = document.createElement("div");
-          div.className = "event";
-
-          div.innerHTML = `
-            <div class="eventTime">${formatDate(ev.datetime)}</div>
-            <div class="eventStatus">${translateStatus(ev.status || "-")}</div>
-            <div class="eventLocation">${ev.location || ""}</div>
-          `;
-
-          eventsEl.appendChild(div);
-        });
+      if(!data.ok){
+        throw new Error(data.error || "Vi kunde inte hitta ordern just nu.");
       }
 
-      resultArea.style.display = "block";
+      await renderResult(data);
+    }catch(err){
+      showError(err.message || "Vi kunde inte hämta ordern just nu.");
+    }finally{
+      orderBtn.disabled = false;
+      orderBtn.textContent = "Spåra order";
     }
+  }
 
-    async function trackByTrackingNumber(tn){
-      const value = String(tn || "").trim();
-      if(!value){
-        showError("Skriv in ett spårningsnummer först.");
-        return;
-      }
+  tabTracking.addEventListener("click", () => setTab("tracking"));
+  tabOrder.addEventListener("click", () => setTab("order"));
 
-      clearError();
-      trackBtn.disabled = true;
-      trackBtn.textContent = "Söker...";
+  trackForm.addEventListener("submit", e => {
+    e.preventDefault();
+    trackByTrackingNumber(trackingInput.value);
+  });
 
-      updateUrlWithTn(value);
+  orderForm.addEventListener("submit", e => {
+    e.preventDefault();
+    trackByOrder(orderInput.value, emailInput.value);
+  });
 
-      try{
-        const res = await fetch(`/api/track?value=${encodeURIComponent(value)}&mode=tracking`);
-        const data = await res.json();
+  (function init(){
+    const url = new URL(window.location.href);
+    const tn = url.searchParams.get("tn");
 
-        if(!data.ok){
-          throw new Error(data.error || "Vi kunde inte hitta försändelsen just nu.");
-        }
-
-        await renderResult(data);
-      }catch(err){
-        showError(err.message || "Vi kunde inte hämta spårningen just nu.");
-      }finally{
-        trackBtn.disabled = false;
-        trackBtn.textContent = "Spåra paket";
-      }
+    if(tn){
+      setTab("tracking");
+      trackingInput.value = tn;
+      trackByTrackingNumber(tn);
     }
-
-    async function trackByOrder(order, email){
-      const o = String(order || "").trim();
-      const e = String(email || "").trim();
-
-      if(!o || !e){
-        showError("Skriv in både ordernummer och e-postadress.");
-        return;
-      }
-
-      clearError();
-      orderBtn.disabled = true;
-      orderBtn.textContent = "Söker...";
-
-      try{
-        const res = await fetch(`/api/track-order?order=${encodeURIComponent(o)}&email=${encodeURIComponent(e)}`);
-        const data = await res.json();
-
-        if(!data.ok){
-          throw new Error(data.error || "Vi kunde inte hitta ordern just nu.");
-        }
-
-        await renderResult(data);
-      }catch(err){
-        showError(err.message || "Vi kunde inte hämta ordern just nu.");
-      }finally{
-        orderBtn.disabled = false;
-        orderBtn.textContent = "Spåra order";
-      }
-    }
-
-    tabTracking.addEventListener("click", () => setTab("tracking"));
-    tabOrder.addEventListener("click", () => setTab("order"));
-
-    trackForm.addEventListener("submit", e => {
-      e.preventDefault();
-      trackByTrackingNumber(trackingInput.value);
-    });
-
-    orderForm.addEventListener("submit", e => {
-      e.preventDefault();
-      trackByOrder(orderInput.value, emailInput.value);
-    });
-
-    (function init(){
-      const url = new URL(window.location.href);
-      const tn = url.searchParams.get("tn");
-
-      if(tn){
-        setTab("tracking");
-        trackingInput.value = tn;
-        trackByTrackingNumber(tn);
-      }
-    })();
-  </script>
-</body>
-</html>
+  })();
+</script>
