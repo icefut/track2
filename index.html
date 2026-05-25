@@ -446,7 +446,7 @@
     function buildLinks(postnord, citymail){
       const parts = [];
       if(postnord){
-        parts.push(`<a class="link" href="https://portal.postnord.com/tracking/details/${encodeURIComponent(postnord)}" target="_blank" rel="noopener noreferrer">📦 Öppna i PostNord</a>`);
+        parts.push(`<a class="link" href="https://portal.postnord.com/tracking/details/${encodeURIComponent(postnord)}?lang=sv" target="_blank" rel="noopener noreferrer">📦 Öppna i PostNord</a>`);
       }
       if(citymail){
         parts.push(`<a class="link" href="https://tracking.citymail.se/?search=${encodeURIComponent(citymail)}" target="_blank" rel="noopener noreferrer">📫 Öppna i CityMail</a>`);
