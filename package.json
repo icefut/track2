@@ -1,12 +1,11 @@
 {
   "name": "track2",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
+  "description": "ICEFOT spårningssida (trackicefot.se) – Ship24, alla transportörer",
+  "engines": { "node": ">=18" },
   "scripts": {
-    "start": "node server.js"
-  },
-  "dependencies": {
-    "@supabase/supabase-js": "^2.48.0",
-    "resend": "^4.0.0"
+    "test": "node tests/run.js",
+    "orders-to-csv": "node scripts/orders-to-csv.js"
   }
 }

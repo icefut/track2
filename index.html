@@ -2,1094 +2,770 @@
 <html lang="sv">
 <head>
   <meta charset="UTF-8" />
-  <title>Spåra din beställning | ICEFOT</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Spåra din beställning | ICEFOT</title>
+  <meta name="description" content="Följ ditt paket från ICEFOT. Spåra med spårningsnummer eller ordernummer och se beräknat leveransdatum." />
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#0b0b0c" media="(prefers-color-scheme: dark)" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23111'/%3E%3Cpath d='M18 24l14-8 14 8v16l-14 8-14-8z' fill='none' stroke='%23fff' stroke-width='4' stroke-linejoin='round'/%3E%3Cpath d='M18 24l14 8 14-8M32 32v16' fill='none' stroke='%23fff' stroke-width='4' stroke-linejoin='round'/%3E%3C/svg%3E" />
 
   <style>
     :root{
-      --bg:#050505;
-      --card:#101010;
-      --card2:#161616;
-      --text:#ffffff;
-      --muted:#a3a3a3;
-      --soft:#e5e5e5;
-      --border:#2a2a2a;
-      --green:#22c55e;
-      --yellow:#facc15;
-      --blue:#3b82f6;
-      --red:#ef4444;
-      --radius:22px;
-      --shadow:0 24px 70px rgba(0,0,0,.45);
+      --bg:#f6f6f7;
+      --surface:#ffffff;
+      --surface-2:#f1f1f3;
+      --text:#111113;
+      --muted:#5f6068;
+      --faint:#8c8d96;
+      --border:#e4e4e8;
+      --accent:#111113;
+      --accent-text:#ffffff;
+      --ok:#15803d;
+      --ok-bg:#ecfdf3;
+      --warn:#a16207;
+      --warn-bg:#fefce8;
+      --bad:#b91c1c;
+      --bad-bg:#fef2f2;
+      --info-bg:#eff6ff;
+      --info:#1d4ed8;
+      --radius:18px;
+      --shadow:0 1px 2px rgba(16,16,20,.04), 0 8px 28px rgba(16,16,20,.06);
+    }
+    @media (prefers-color-scheme: dark){
+      :root{
+        --bg:#0b0b0c;
+        --surface:#151517;
+        --surface-2:#1d1d20;
+        --text:#f4f4f5;
+        --muted:#a8a8b0;
+        --faint:#7c7c85;
+        --border:#2a2a2f;
+        --accent:#f4f4f5;
+        --accent-text:#0b0b0c;
+        --ok:#4ade80;
+        --ok-bg:#0f2a1a;
+        --warn:#facc15;
+        --warn-bg:#2a2410;
+        --bad:#f87171;
+        --bad-bg:#2c1414;
+        --info-bg:#111c33;
+        --info:#93b4ff;
+        --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.35);
+      }
     }
 
     *{box-sizing:border-box}
-
+    html{-webkit-text-size-adjust:100%}
     body{
       margin:0;
-      min-height:100vh;
-      background:
-        radial-gradient(circle at top left, rgba(59,130,246,.18), transparent 32%),
-        radial-gradient(circle at bottom right, rgba(34,197,94,.14), transparent 30%),
-        var(--bg);
-      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      background:var(--bg);
       color:var(--text);
-      padding:18px;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,system-ui,sans-serif;
+      font-size:15px;
+      line-height:1.5;
+    }
+    a{color:inherit}
+    button,input{font:inherit;color:inherit}
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
+    .hidden{display:none!important}
+
+    /* Header */
+    .topbar{
+      background:var(--surface);
+      border-bottom:1px solid var(--border);
+    }
+    .topbar-inner{
+      max-width:880px;margin:0 auto;padding:14px 16px;
+      display:flex;align-items:center;justify-content:space-between;gap:12px;
+    }
+    .logo{font-weight:900;letter-spacing:.14em;font-size:20px;text-decoration:none}
+    .back{font-size:14px;color:var(--muted);text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+    .back:hover{color:var(--text)}
+
+    .usps{
+      background:var(--accent);color:var(--accent-text);
+      font-size:12.5px;font-weight:600;text-align:center;padding:7px 12px;letter-spacing:.01em;
     }
 
-    .page{
-      width:100%;
-      max-width:1040px;
-      margin:0 auto;
-      padding:22px 0;
-    }
+    main{max-width:880px;margin:0 auto;padding:28px 16px 60px}
 
-    .hero{
-      background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
-      border:1px solid rgba(255,255,255,.12);
-      border-radius:28px;
-      padding:24px;
+    h1{font-size:clamp(28px,5vw,40px);line-height:1.1;letter-spacing:-.02em;margin:0 0 8px}
+    .lead{color:var(--muted);margin:0 0 22px;max-width:600px}
+
+    .card{
+      background:var(--surface);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
       box-shadow:var(--shadow);
     }
 
-    .brand{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:14px;
-      margin-bottom:22px;
-    }
-
-    .logo{
-      font-weight:1000;
-      letter-spacing:.08em;
-      font-size:18px;
-    }
-
-    .trust{
-      font-size:13px;
-      color:#d4d4d4;
-      background:rgba(255,255,255,.08);
-      border:1px solid rgba(255,255,255,.12);
-      padding:8px 11px;
-      border-radius:999px;
-      white-space:nowrap;
-    }
-
-    h1{
-      margin:0;
-      font-size:clamp(31px, 5vw, 56px);
-      line-height:.95;
-      letter-spacing:-1.8px;
-    }
-
-    .lead{
-      margin:14px 0 0;
-      max-width:670px;
-      color:#d4d4d4;
-      font-size:16px;
-      line-height:1.55;
-    }
-
-    .searchBox{
-      margin-top:22px;
-      background:rgba(255,255,255,.07);
-      border:1px solid rgba(255,255,255,.12);
-      border-radius:24px;
-      padding:14px;
-    }
-
+    /* Search */
+    .search{padding:16px}
     .tabs{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:8px;
-      margin-bottom:12px;
-      background:#070707;
-      border:1px solid rgba(255,255,255,.1);
-      padding:5px;
-      border-radius:999px;
+      display:inline-flex;background:var(--surface-2);border-radius:999px;padding:4px;margin-bottom:14px;gap:2px;
+      max-width:100%;
     }
-
     .tab{
-      border:0;
-      background:transparent;
-      color:#cfcfcf;
-      font-weight:950;
-      padding:12px 10px;
-      border-radius:999px;
-      cursor:pointer;
-      font-size:14px;
-    }
-
-    .tab.active{
-      background:#fff;
-      color:#050505;
-    }
-
-    .form{display:block}
-    .hidden{display:none!important}
-
-    .row{
-      display:grid;
-      grid-template-columns:1fr auto;
-      gap:10px;
-    }
-
-    .row.two{
-      grid-template-columns:1fr 1fr auto;
-    }
-
-    input{
-      width:100%;
-      border:1px solid rgba(255,255,255,.13);
-      background:#080808;
-      color:#fff;
-      border-radius:16px;
-      padding:15px 15px;
-      font-size:15px;
-      outline:none;
-    }
-
-    input::placeholder{color:#777}
-
-    input:focus{
-      border-color:#fff;
-      box-shadow:0 0 0 4px rgba(255,255,255,.08);
-    }
-
-    .btn{
-      border:0;
-      background:#fff;
-      color:#050505;
-      border-radius:16px;
-      padding:0 20px;
-      font-size:15px;
-      font-weight:1000;
-      cursor:pointer;
+      border:0;background:transparent;padding:8px 14px;border-radius:999px;font-weight:600;font-size:14px;cursor:pointer;color:var(--muted);
       white-space:nowrap;
-      min-height:52px;
+    }
+    .tab[aria-selected="true"]{background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+    .fields{display:flex;gap:10px}
+    .fields .grow{flex:1;min-width:0}
+    label.field{display:block}
+    label.field span{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:0 0 6px 2px}
+    input[type=text],input[type=email]{
+      width:100%;height:50px;border:1px solid var(--border);background:var(--surface);
+      border-radius:12px;padding:0 14px;font-size:16px;outline:none;transition:border-color .15s, box-shadow .15s;
+    }
+    input::placeholder{color:var(--faint)}
+    input:focus{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 14%, transparent)}
+    .btn{
+      height:50px;border:0;border-radius:12px;padding:0 22px;font-weight:700;cursor:pointer;
+      background:var(--accent);color:var(--accent-text);white-space:nowrap;align-self:flex-end;
+      display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    }
+    .btn:disabled{opacity:.6;cursor:progress}
+    .btn-ghost{
+      height:38px;border:1px solid var(--border);border-radius:10px;padding:0 12px;background:var(--surface);
+      font-weight:600;font-size:13.5px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:var(--text);
+    }
+    .btn-ghost:hover{background:var(--surface-2)}
+    .hint{color:var(--faint);font-size:13px;margin:10px 2px 0}
+    .recent{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;align-items:center}
+    .recent-label{font-size:12.5px;color:var(--faint);margin-right:2px}
+    .chip{
+      border:1px solid var(--border);background:var(--surface-2);border-radius:999px;padding:4px 10px;font-size:12.5px;cursor:pointer;
+      font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
     }
 
-    .btn:disabled{
-      opacity:.65;
-      cursor:wait;
+    .alert{
+      margin-top:14px;border-radius:12px;padding:12px 14px;font-size:14px;line-height:1.5;
+      background:var(--bad-bg);color:var(--bad);border:1px solid color-mix(in srgb, var(--bad) 25%, transparent);
     }
 
-    .hint{
-      margin-top:10px;
-      color:#aaa;
-      font-size:13px;
-      line-height:1.45;
-    }
+    .spinner{width:16px;height:16px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin .7s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
 
-    .error{
-      margin-top:14px;
-      display:none;
-      background:rgba(239,68,68,.12);
-      border:1px solid rgba(239,68,68,.3);
-      color:#fecaca;
-      border-radius:18px;
-      padding:14px;
-      font-weight:750;
-      line-height:1.45;
-    }
+    /* Skeleton */
+    .skeleton{margin-top:18px;padding:22px}
+    .sk{background:linear-gradient(90deg,var(--surface-2),var(--border),var(--surface-2));background-size:200% 100%;animation:sh 1.2s infinite;border-radius:8px;height:14px;margin-bottom:12px}
+    @keyframes sh{to{background-position:-200% 0}}
 
-    .results{
-      margin-top:18px;
-      display:none;
-    }
+    /* Result */
+    #result{margin-top:18px;display:grid;gap:14px}
+    .packages{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:13.5px;color:var(--muted)}
+    .pkg{border:1px solid var(--border);background:var(--surface);border-radius:10px;padding:6px 12px;cursor:pointer;font-weight:600;font-size:13px}
+    .pkg[aria-pressed="true"]{background:var(--accent);color:var(--accent-text);border-color:var(--accent)}
 
-    .statusHero{
-      background:#fff;
-      color:#050505;
-      border-radius:26px;
-      padding:20px;
-      display:grid;
-      grid-template-columns:1fr auto;
-      gap:18px;
-      align-items:center;
-      margin-bottom:14px;
+    .status{padding:22px}
+    .status-top{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}
+    .eyebrow{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--faint);margin-bottom:6px}
+    .status-title{font-size:clamp(22px,4vw,28px);font-weight:800;letter-spacing:-.01em;line-height:1.15;margin:0 0 6px}
+    .status-desc{color:var(--muted);margin:0;max-width:520px}
+    .badge{
+      flex:none;display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:6px 11px;font-size:12.5px;font-weight:700;
+      background:var(--info-bg);color:var(--info);
     }
+    .badge.ok{background:var(--ok-bg);color:var(--ok)}
+    .badge.warn{background:var(--warn-bg);color:var(--warn)}
+    .badge.bad{background:var(--bad-bg);color:var(--bad)}
 
-    .statusOverline{
-      font-size:12px;
-      text-transform:uppercase;
-      letter-spacing:.08em;
-      color:#525252;
-      font-weight:1000;
-      margin-bottom:7px;
+    .eta{
+      margin-top:18px;border-radius:14px;background:var(--surface-2);padding:16px 18px;
+      display:flex;justify-content:space-between;gap:14px;align-items:center;flex-wrap:wrap;
     }
+    .eta-label{font-size:12.5px;font-weight:600;color:var(--muted)}
+    .eta-date{font-size:clamp(22px,4.5vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.15;margin-top:2px}
+    .eta-likely{font-size:13.5px;color:var(--muted);margin-top:4px}
+    .eta-likely b{color:var(--text)}
+    .eta-note{font-size:13px;color:var(--muted);max-width:330px}
 
-    .statusTitle{
-      font-size:25px;
-      font-weight:1000;
-      letter-spacing:-.5px;
-      margin-bottom:7px;
+    /* Steps */
+    .steps{list-style:none;margin:22px 0 4px;padding:0;display:grid;grid-template-columns:repeat(5,1fr);position:relative}
+    .steps::before,.steps .fill{
+      content:"";position:absolute;top:13px;left:10%;right:10%;height:3px;background:var(--border);border-radius:3px;
     }
-
-    .statusDesc{
-      color:#525252;
-      font-size:14px;
-      line-height:1.45;
+    .steps .fill{background:var(--accent);right:auto;width:0;transition:width .6s ease}
+    .step{position:relative;text-align:center;font-size:12px;color:var(--faint);font-weight:600;padding:0 2px}
+    .dot{
+      width:28px;height:28px;border-radius:50%;margin:0 auto 7px;background:var(--surface);border:3px solid var(--border);
+      display:grid;place-items:center;position:relative;z-index:1;transition:all .3s;
     }
+    .step.done .dot{background:var(--accent);border-color:var(--accent)}
+    .step.done .dot svg{display:block}
+    .dot svg{display:none;width:14px;height:14px;stroke:var(--accent-text)}
+    .step.current .dot{border-color:var(--accent);box-shadow:0 0 0 5px color-mix(in srgb, var(--accent) 12%, transparent)}
+    .step.done,.step.current{color:var(--text)}
 
-    .statusIcon{
-      width:58px;
-      height:58px;
-      border-radius:20px;
-      background:#050505;
-      color:#fff;
-      display:grid;
-      place-items:center;
-      font-size:26px;
+    .notice{
+      margin-top:16px;border-radius:12px;padding:12px 14px;font-size:14px;display:flex;gap:10px;align-items:flex-start;
+      background:var(--warn-bg);color:var(--text);border:1px solid color-mix(in srgb, var(--warn) 30%, transparent);
     }
+    .notice.bad{background:var(--bad-bg);border-color:color-mix(in srgb, var(--bad) 30%, transparent)}
+    .notice .ico{flex:none;font-size:16px;line-height:1.3}
+    .notice a{font-weight:700}
 
-    .grid{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:14px;
-    }
-
-    .card{
-      background:rgba(255,255,255,.07);
-      border:1px solid rgba(255,255,255,.12);
-      border-radius:24px;
-      padding:18px;
-    }
-
-    .cardTitle{
-      font-size:16px;
-      font-weight:1000;
-      margin-bottom:14px;
-    }
-
-    .kv{
-      display:flex;
-      justify-content:space-between;
-      gap:14px;
-      padding:11px 0;
-      border-top:1px solid rgba(255,255,255,.09);
-    }
-
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    .panel{padding:18px}
+    .panel h2{font-size:15px;margin:0 0 12px;font-weight:750}
+    .kv{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-top:1px solid var(--border);font-size:14px}
     .kv:first-of-type{border-top:0;padding-top:0}
-
-    .kv span{
-      color:#aaa;
-      font-size:14px;
+    .kv dt{color:var(--muted)}
+    .kv dd{margin:0;font-weight:600;text-align:right;word-break:break-all;display:flex;align-items:center;gap:6px;justify-content:flex-end}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px}
+    .copy{border:0;background:transparent;cursor:pointer;color:var(--faint);padding:2px;display:inline-grid;place-items:center;border-radius:6px}
+    .copy:hover{color:var(--text);background:var(--surface-2)}
+    .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+    .carrier-btn{
+      display:flex;align-items:center;justify-content:space-between;gap:10px;text-decoration:none;
+      border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-top:8px;font-weight:650;background:var(--surface);
     }
+    .carrier-btn:hover{background:var(--surface-2)}
+    .carrier-btn small{display:block;color:var(--muted);font-weight:500;font-size:12.5px}
+    .muted{color:var(--muted);font-size:13.5px}
 
-    .kv strong{
-      font-size:14px;
-      text-align:right;
-      max-width:62%;
-      word-break:break-word;
+    /* Timeline */
+    .timeline{list-style:none;margin:0;padding:0}
+    .day{font-size:12px;font-weight:700;color:var(--faint);text-transform:uppercase;letter-spacing:.06em;margin:16px 0 8px}
+    .day:first-child{margin-top:0}
+    .ev{display:grid;grid-template-columns:52px 18px 1fr;gap:8px;position:relative;padding-bottom:14px}
+    .ev-time{font-size:12.5px;color:var(--faint);padding-top:1px;font-variant-numeric:tabular-nums}
+    .ev-line{position:relative}
+    .ev-line::before{content:"";position:absolute;left:5px;top:6px;width:9px;height:9px;border-radius:50%;background:var(--border)}
+    .ev-line::after{content:"";position:absolute;left:9px;top:19px;bottom:-14px;width:1px;background:var(--border)}
+    .ev:last-child .ev-line::after{display:none}
+    .ev.first .ev-line::before{background:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb, var(--accent) 14%, transparent)}
+    .ev-status{font-weight:650;font-size:14.5px;line-height:1.35}
+    .ev.first .ev-status{font-weight:800}
+    .ev-meta{font-size:12.5px;color:var(--muted);margin-top:2px}
+    .more{margin-top:4px}
+
+    /* FAQ */
+    .faq{margin-top:28px}
+    .faq h2{font-size:18px;margin:0 0 10px}
+    details{border-top:1px solid var(--border);padding:14px 2px}
+    details:last-of-type{border-bottom:1px solid var(--border)}
+    summary{cursor:pointer;font-weight:650;list-style:none;display:flex;justify-content:space-between;gap:12px}
+    summary::-webkit-details-marker{display:none}
+    summary::after{content:"+";font-weight:400;font-size:20px;line-height:1;color:var(--faint)}
+    details[open] summary::after{content:"–"}
+    details p{color:var(--muted);margin:10px 0 0;font-size:14.5px}
+
+    .contact{
+      margin-top:22px;padding:18px;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;
     }
+    .contact b{display:block;font-size:15px}
+    footer{color:var(--faint);font-size:12.5px;text-align:center;margin-top:28px}
 
-    .links{
-      display:flex;
-      flex-wrap:wrap;
-      gap:9px;
-      margin-top:13px;
+    .toast{
+      position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);opacity:0;
+      background:var(--accent);color:var(--accent-text);padding:10px 16px;border-radius:999px;font-size:13.5px;font-weight:600;
+      transition:all .25s;pointer-events:none;z-index:10;
     }
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-    .link{
-      display:inline-flex;
-      align-items:center;
-      gap:7px;
-      background:#fff;
-      color:#050505;
-      text-decoration:none;
-      border-radius:14px;
-      padding:11px 13px;
-      font-weight:1000;
-      font-size:14px;
+    @media (max-width:680px){
+      main{padding:20px 16px 48px}
+      .fields{flex-direction:column}
+      .btn{width:100%}
+      .grid2{grid-template-columns:1fr}
+      .status{padding:18px}
+      .status-top{flex-direction:column-reverse;gap:10px}
+      .step{font-size:10.5px}
+      .dot{width:24px;height:24px}
+      .steps::before,.steps .fill{top:11px}
+      .tab{padding:8px 11px;font-size:13px}
     }
-
-    .mutedBox{
-      color:#aaa;
-      font-size:13px;
-      line-height:1.45;
-      background:rgba(255,255,255,.06);
-      border:1px dashed rgba(255,255,255,.14);
-      border-radius:16px;
-      padding:12px;
-      margin-top:12px;
-    }
-
-    .etaBig{
-      font-size:25px;
-      font-weight:1000;
-      letter-spacing:-.4px;
-      margin-bottom:8px;
-    }
-
-    .etaSmall{
-      color:#aaa;
-      font-size:14px;
-      line-height:1.45;
-    }
-
-    .steps{
-      margin-top:18px;
-    }
-
-    .bar{
-      height:12px;
-      background:#2a2a2a;
-      border-radius:999px;
-      overflow:hidden;
-      border:1px solid rgba(255,255,255,.12);
-    }
-
-    .barInner{
-      height:100%;
-      width:20%;
-      background:#fff;
-      border-radius:999px;
-      transition:.35s ease;
-    }
-
-    .stepLabels{
-      display:grid;
-      grid-template-columns:repeat(4,1fr);
-      gap:7px;
-      margin-top:10px;
-      color:#888;
-      font-size:12px;
-      font-weight:800;
-      text-align:center;
-    }
-
-    .stepLabels .active{color:#fff}
-
-    .timelineWrap{
-      margin-top:14px;
-      background:rgba(255,255,255,.07);
-      border:1px solid rgba(255,255,255,.12);
-      border-radius:24px;
-      padding:18px;
-    }
-
-    .timeline{
-      border-left:2px solid rgba(255,255,255,.22);
-      padding-left:18px;
-    }
-
-    .event{
-      position:relative;
-      padding-bottom:17px;
-    }
-
-    .event:last-child{padding-bottom:0}
-
-    .event::before{
-      content:"";
-      position:absolute;
-      left:-24px;
-      top:4px;
-      width:10px;
-      height:10px;
-      background:#fff;
-      border-radius:50%;
-      box-shadow:0 0 0 5px #111;
-    }
-
-    .eventTime{
-      color:#aaa;
-      font-size:13px;
-      margin-bottom:3px;
-    }
-
-    .eventStatus{
-      font-weight:1000;
-      font-size:15px;
-      line-height:1.35;
-    }
-
-    .eventLocation{
-      color:#bdbdbd;
-      font-size:13px;
-      margin-top:3px;
-    }
-
-    .emptyEvents{
-      color:#aaa;
-      font-size:14px;
-      line-height:1.45;
-    }
-
-    @media(max-width:760px){
-      body{padding:10px}
-      .hero{padding:18px;border-radius:24px}
-      .brand{align-items:flex-start}
-      .trust{font-size:12px}
-      .row,.row.two{grid-template-columns:1fr}
-      .btn{width:100%;justify-content:center}
-      .statusHero{grid-template-columns:1fr}
-      .statusIcon{display:none}
-      .grid{grid-template-columns:1fr}
-      .tabs{grid-template-columns:1fr}
-      .stepLabels{font-size:11px}
-    }
+    @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
   </style>
 </head>
 
 <body>
-  <main class="page">
-    <section class="hero">
-      <div class="brand">
-        <div class="logo">ICEFOT</div>
-        <div class="trust">Svensk support • Ingen tullavgift</div>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="logo" href="https://icefot.se" aria-label="ICEFOT – till butiken">ICEFOT</a>
+      <a class="back" href="https://icefot.se">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+        Till butiken
+      </a>
+    </div>
+  </header>
+  <div class="usps">Svensk kundtjänst · Inga tullavgifter</div>
+
+  <main>
+    <h1>Spåra din beställning</h1>
+    <p class="lead">Se var ditt paket är och när det beräknas komma fram. Fungerar med alla spårningsnummer – 4PX, PostNord, CityMail, DHL, Budbee med flera.</p>
+
+    <section class="card search" aria-label="Sök paket">
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" id="tabTn" aria-selected="true" aria-controls="formTn" type="button">Spårningsnummer</button>
+        <button class="tab" role="tab" id="tabOrder" aria-selected="false" aria-controls="formOrder" type="button">Ordernummer + e-post</button>
       </div>
 
-      <h1>Spåra din beställning</h1>
-      <p class="lead">
-        Här kan du följa din beställning med spårningsnummer eller med ordernummer och e-post.
-        Spårningen kan ibland ta några dagar innan den börjar uppdateras.
-      </p>
-
-      <div class="searchBox">
-        <div class="tabs">
-          <button class="tab active" id="tabTracking" type="button">Spårningsnummer</button>
-          <button class="tab" id="tabOrder" type="button">Ordernummer + e-post</button>
+      <form id="formTn" role="tabpanel" aria-labelledby="tabTn" novalidate>
+        <div class="fields">
+          <label class="field grow">
+            <span>Spårningsnummer</span>
+            <input id="tnInput" type="text" inputmode="text" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="t.ex. 4PX3003133621569CN" />
+          </label>
+          <button class="btn" id="tnBtn" type="submit">Spåra</button>
         </div>
+        <p class="hint">Du hittar numret i mejlet du fick när ordern skickades.</p>
+        <div class="recent hidden" id="recent"></div>
+      </form>
 
-        <form id="trackForm" class="form">
-          <div class="row">
-            <input id="trackingInput" type="text" placeholder="Skriv ditt spårningsnummer" autocomplete="off" />
-            <button class="btn" id="trackBtn" type="submit">Spåra paket</button>
-          </div>
-          <div class="hint">Exempel: 4PX, LZ, 999 eller annat spårningsnummer du fått via e-post.</div>
-        </form>
-
-        <form id="orderForm" class="form hidden">
-          <div class="row two">
-            <input id="orderInput" type="text" placeholder="Ordernummer, t.ex. 22700" autocomplete="off" />
-            <input id="emailInput" type="email" placeholder="E-post från beställningen" autocomplete="off" />
-            <button class="btn" id="orderBtn" type="submit">Spåra order</button>
-          </div>
-          <div class="hint">Använd samma e-postadress som du skrev när du beställde. Skriv ditt ordernummer utan #</div>
-        </form>
-
-        <div id="errorBox" class="error"></div>
-      </div>
-
-      <div id="resultArea" class="results">
-        <div class="statusHero">
-          <div>
-            <div class="statusOverline" id="statusOverline">Orderstatus</div>
-            <div class="statusTitle" id="statusTitle">—</div>
-            <div class="statusDesc" id="statusDesc">—</div>
-          </div>
-          <div class="statusIcon" id="statusIcon">📦</div>
+      <form id="formOrder" role="tabpanel" aria-labelledby="tabOrder" class="hidden" novalidate>
+        <div class="fields">
+          <label class="field" style="flex:0 0 170px;max-width:100%">
+            <span>Ordernummer</span>
+            <input id="orderInput" type="text" inputmode="numeric" autocomplete="off" placeholder="t.ex. 37157" />
+          </label>
+          <label class="field grow">
+            <span>E-post</span>
+            <input id="emailInput" type="email" autocomplete="email" placeholder="Samma som vid beställningen" />
+          </label>
+          <button class="btn" id="orderBtn" type="submit">Spåra</button>
         </div>
+        <p class="hint">Ordernumret står i orderbekräftelsen. Hittar vi ingen träff har ordern troligen inte skickats än.</p>
+      </form>
 
-        <div class="grid">
-          <div class="card">
-            <div class="cardTitle">Spårningsinformation</div>
-
-            <div class="kv">
-              <span>Spårningsnummer</span>
-              <strong id="trackingValue">—</strong>
-            </div>
-
-            <div class="kv">
-              <span>PostNord</span>
-              <strong id="postnordValue">Inte tilldelat ännu</strong>
-            </div>
-
-            <div class="kv">
-              <span>CityMail</span>
-              <strong id="citymailValue">Inte tilldelat ännu</strong>
-            </div>
-
-            <div class="kv">
-              <span>Senast uppdaterad</span>
-              <strong id="updatedValue">—</strong>
-            </div>
-
-            <div class="links" id="linksWrap"></div>
-            <div class="mutedBox" id="carrierNote">När paketet får ett lokalt spårningsnummer visas länk till PostNord eller CityMail här.</div>
-          </div>
-
-          <div class="card">
-            <div class="cardTitle">Beräknad leverans</div>
-            <div class="etaBig" id="etaBig">—</div>
-            <div class="etaSmall" id="etaSmall">Uppskattning baserad på senaste händelsen.</div>
-
-            <div class="steps">
-              <div class="bar">
-                <div class="barInner" id="progressBar"></div>
-              </div>
-              <div class="stepLabels">
-                <div id="s1">Registrerad</div>
-                <div id="s2">På väg</div>
-                <div id="s3">Ute för leverans</div>
-                <div id="s4">Levererad</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="timelineWrap">
-          <div class="cardTitle">Händelser</div>
-          <div class="timeline" id="events"></div>
-        </div>
-      </div>
+      <div id="error" class="alert hidden" role="alert"></div>
     </section>
+
+    <section id="skeleton" class="card skeleton hidden" aria-hidden="true">
+      <div class="sk" style="width:30%"></div>
+      <div class="sk" style="width:60%;height:24px"></div>
+      <div class="sk" style="width:80%"></div>
+      <div class="sk" style="width:100%;height:64px;margin-top:18px"></div>
+    </section>
+
+    <section id="result" class="hidden" aria-live="polite"></section>
+
+    <section class="faq" aria-label="Vanliga frågor">
+      <h2>Vanliga frågor</h2>
+      <details>
+        <summary>Hur lång är leveranstiden?</summary>
+        <p>När paketet har skickats tar det oftast 8–12 arbetsdagar tills det är hos dig. Prognosen ovan räknas fram utifrån var ditt paket är just nu och hur lång tid våra tidigare leveranser har tagit från samma steg.</p>
+      </details>
+      <details>
+        <summary>Spårningen har inte uppdaterats på flera dagar – är något fel?</summary>
+        <p>Det är helt normalt. Under flygtransport och tullhantering skannas paketen ofta inte på 3–6 dagar. När paketet kommer till Sverige börjar spårningen uppdateras igen och då visas även PostNord- eller CityMail-numret. Har det gått mer än 14 dagar utan uppdatering – kontakta oss så hjälper vi dig.</p>
+      </details>
+      <details>
+        <summary>Jag har fått ett nytt spårningsnummer från PostNord/CityMail</summary>
+        <p>Paketet lämnas över till en svensk transportör när det kommit fram till Sverige. Du kan spåra med antingen ditt ursprungliga nummer eller det nya – båda fungerar här.</p>
+      </details>
+      <details>
+        <summary>Det står levererat men jag har inte fått paketet</summary>
+        <p>Kolla brevlådan, hos grannar och ditt närmaste ombud – ibland registreras leveransen någon timme innan paketet faktiskt kommer. Har du fortfarande inte fått det nästa dag, mejla oss så löser vi det.</p>
+      </details>
+      <details>
+        <summary>Måste jag betala tull eller avgifter?</summary>
+        <p>Nej. Alla avgifter är redan betalda, du behöver inte betala något när paketet kommer.</p>
+      </details>
+    </section>
+
+    <section class="card contact">
+      <div>
+        <b>Behöver du hjälp?</b>
+        <span class="muted">Vi svarar oftast inom 24 timmar.</span>
+      </div>
+      <a class="btn-ghost" id="contactLink" href="mailto:kontakt@icefot.se?subject=Fr%C3%A5ga%20om%20min%20order">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+        kontakt@icefot.se
+      </a>
+    </section>
+
+    <footer>© ICEFOT · Spårningsdata från transportörerna via Ship24</footer>
   </main>
 
- <script>
-  const tabTracking = document.getElementById("tabTracking");
-  const tabOrder = document.getElementById("tabOrder");
-  const trackForm = document.getElementById("trackForm");
-  const orderForm = document.getElementById("orderForm");
+  <div class="toast" id="toast" role="status"></div>
 
-  const trackingInput = document.getElementById("trackingInput");
-  const orderInput = document.getElementById("orderInput");
-  const emailInput = document.getElementById("emailInput");
+<script>
+(() => {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  const CONTACT = "kontakt@icefot.se";
+  const TZ = "Europe/Stockholm";
 
-  const trackBtn = document.getElementById("trackBtn");
-  const orderBtn = document.getElementById("orderBtn");
+  const els = {
+    tabTn: $("tabTn"), tabOrder: $("tabOrder"),
+    formTn: $("formTn"), formOrder: $("formOrder"),
+    tnInput: $("tnInput"), tnBtn: $("tnBtn"),
+    orderInput: $("orderInput"), emailInput: $("emailInput"), orderBtn: $("orderBtn"),
+    error: $("error"), result: $("result"), skeleton: $("skeleton"), recent: $("recent"), toast: $("toast"),
+    contactLink: $("contactLink"),
+  };
 
-  const errorBox = document.getElementById("errorBox");
-  const resultArea = document.getElementById("resultArea");
+  let current = null;      // senaste resultat
+  let lastQuery = null;    // { type:"tn", tn } | { type:"order", order, email }
 
-  const statusOverline = document.getElementById("statusOverline");
-  const statusTitle = document.getElementById("statusTitle");
-  const statusDesc = document.getElementById("statusDesc");
-  const statusIcon = document.getElementById("statusIcon");
+  // ---------- små hjälpare ----------
+  function h(tag, attrs, ...kids) {
+    const el = document.createElement(tag);
+    if (attrs) for (const [k, v] of Object.entries(attrs)) {
+      if (v == null || v === false) continue;
+      if (k === "class") el.className = v;
+      else if (k === "text") el.textContent = v;
+      else if (k === "html") el.innerHTML = v; // endast för egna, statiska ikoner
+      else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+      else el.setAttribute(k, v === true ? "" : v);
+    }
+    for (const kid of kids.flat()) if (kid != null && kid !== false) el.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
+    return el;
+  }
+  const ICON_CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+  const ICON_COPY = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>';
+  const ICON_EXT = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M8 7h9v9"/></svg>';
 
-  const trackingValue = document.getElementById("trackingValue");
-  const postnordValue = document.getElementById("postnordValue");
-  const citymailValue = document.getElementById("citymailValue");
-  const updatedValue = document.getElementById("updatedValue");
-
-  const linksWrap = document.getElementById("linksWrap");
-  const carrierNote = document.getElementById("carrierNote");
-
-  const etaBig = document.getElementById("etaBig");
-  const etaSmall = document.getElementById("etaSmall");
-  const progressBar = document.getElementById("progressBar");
-
-  const stepEls = [
-    document.getElementById("s1"),
-    document.getElementById("s2"),
-    document.getElementById("s3"),
-    document.getElementById("s4")
-  ];
-
-  const eventsEl = document.getElementById("events");
-
-  function normalizeText(text){
-    return String(text || "")
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "");
+  function toast(msg) {
+    els.toast.textContent = msg;
+    els.toast.classList.add("show");
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => els.toast.classList.remove("show"), 1800);
   }
 
-  function allEventsText(data){
-    return normalizeText(JSON.stringify(data.events || []));
+  async function copy(text) {
+    try { await navigator.clipboard.writeText(text); toast("Kopierat"); }
+    catch { toast("Kunde inte kopiera"); }
   }
 
-  function translateStatus(text){
-    if(!text) return "";
-    const t = String(text).trim();
+  const fmtDay = new Intl.DateTimeFormat("sv-SE", { timeZone: TZ, weekday: "long", day: "numeric", month: "long" });
+  const fmtTime = new Intl.DateTimeFormat("sv-SE", { timeZone: TZ, hour: "2-digit", minute: "2-digit" });
+  const fmtYmd = new Intl.DateTimeFormat("sv-SE", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit" });
+  const fmtShort = new Intl.DateTimeFormat("sv-SE", { timeZone: TZ, day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+  const cap = (s) => s ? s[0].toUpperCase() + s.slice(1) : s;
 
-    const list = [
-      [/^Parcel outbound from transit center\.?$/i, "Paketet har lämnat transitcentret"],
-      [/^Arrive in transit center\.?$/i, "Ankom till transitcenter"],
-      [/^Released from customs:\s*customs cleared\.?$/i, "Tullklarerad"],
-      [/^Arrival to the destination airport\.?$/i, "Ankom till destinationsflygplats"],
-      [/^Departure from the original airport\.?$/i, "Avgick från ursprungsflygplats"],
-      [/^Hand over to airline\.?$/i, "Överlämnat till flygbolag"],
-      [/^Shipping information received\.?$/i, "Fraktinformation mottagen"],
-      [/^Parcel information received\.?$/i, "Paketinformation mottagen"],
-      [/^Shipment arrived at facility and measured\.?$/i, "Ankom till anläggning och registrerades"],
-      [/^Shipment picked up\.?$/i, "Hämtad av transportör"],
-      [/^Depart from facility to service provider\.?$/i, "Lämnade anläggning för vidare transport"],
-      [/^The shipment item is under transportation\.?$/i, "Försändelsen är under transport"],
-      [/^The shipment item has arrived at the country of destination\.?$/i, "Ankom till destinationslandet"],
-      [/^The shipment item has been loaded\.?$/i, "Försändelsen har lastats"],
-      [/^A text message notification has been sent to the recipient\.?$/i, "SMS-notis har skickats till mottagaren"],
-      [/^The shipment item has been delivered at the recipient's door\.?$/i, "Paketet har levererats hem till dig"],
-      [/^The shipment item has been delivered to the recipient'?s mailbox\.?$/i, "Paketet har levererats till mottagarens brevlåda"],
-      [/^The shipment item has been delivered to the recipients mailbox\.?$/i, "Paketet har levererats till mottagarens brevlåda"],
-      [/^Your item is being processed at our sorting center\.?$/i, "Paketet sorteras hos transportören"],
-      [/^The shipment item has been handed over to a partner for transportation to the final destination\.?$/i, "Paketet har lämnats över till lokal transportör för slutleverans"],
-      [/^We have received a notification from your shipper.*$/i, "Vi har fått en beställning på en leverans och väntar på paketet"]
-    ];
-
-    for(const [re, sv] of list){
-      if(re.test(t)) return sv;
-    }
-
-    return t;
+  function dayLabel(d) {
+    const today = fmtYmd.format(new Date());
+    const yest = fmtYmd.format(new Date(Date.now() - 86400000));
+    const ymd = fmtYmd.format(d);
+    if (ymd === today) return "Idag";
+    if (ymd === yest) return "Igår";
+    return cap(fmtDay.format(d));
   }
 
-  function formatDate(value){
-    if(!value) return "—";
-    const d = new Date(value);
-    if(isNaN(d.getTime())) return value;
-
-    return d.toLocaleString("sv-SE", {
-      year:"numeric",
-      month:"short",
-      day:"numeric",
-      hour:"2-digit",
-      minute:"2-digit"
-    });
+  function relTime(iso) {
+    if (!iso) return "";
+    const diff = Date.now() - new Date(iso).getTime();
+    const m = Math.round(diff / 60000);
+    if (m < 2) return "nyss";
+    if (m < 60) return `${m} min sedan`;
+    const hrs = Math.round(m / 60);
+    if (hrs < 24) return `${hrs} tim sedan`;
+    const d = Math.round(hrs / 24);
+    return d === 1 ? "1 dag sedan" : `${d} dagar sedan`;
   }
 
-  function showError(message){
-    errorBox.innerHTML = `
-      ${message || "Något gick fel."}<br>
-      <span style="font-weight:600;color:#fecaca;">
-        Ditt paket har kanske ännu inte skickats, eller så har du skrivit fel ordernummer/e-post.
-        Kontrollera uppgifterna och testa igen.
-      </span>
-    `;
-    errorBox.style.display = "block";
-    resultArea.style.display = "none";
+  // ---------- senaste sökningar (bara i din webbläsare) ----------
+  const RECENT_KEY = "icefot_recent_tn";
+  function getRecent() { try { return JSON.parse(localStorage.getItem(RECENT_KEY) || "[]").slice(0, 4); } catch { return []; } }
+  function saveRecent(tn) {
+    try { localStorage.setItem(RECENT_KEY, JSON.stringify([tn, ...getRecent().filter((x) => x !== tn)].slice(0, 4))); } catch {}
+    renderRecent();
+  }
+  function renderRecent() {
+    const list = getRecent();
+    els.recent.replaceChildren();
+    if (!list.length) return els.recent.classList.add("hidden");
+    els.recent.classList.remove("hidden");
+    els.recent.append(h("span", { class: "recent-label", text: "Senast spårade:" }));
+    list.forEach((tn) => els.recent.append(h("button", { class: "chip", type: "button", onclick: () => { els.tnInput.value = tn; trackTn(tn); } }, tn)));
   }
 
-  function clearError(){
-    errorBox.style.display = "none";
-    errorBox.textContent = "";
+  // ---------- flikar ----------
+  function setTab(mode) {
+    const order = mode === "order";
+    els.tabOrder.setAttribute("aria-selected", order);
+    els.tabTn.setAttribute("aria-selected", !order);
+    els.formOrder.classList.toggle("hidden", !order);
+    els.formTn.classList.toggle("hidden", order);
+    clearError();
+  }
+  els.tabTn.addEventListener("click", () => { setTab("tn"); els.tnInput.focus(); });
+  els.tabOrder.addEventListener("click", () => { setTab("order"); els.orderInput.focus(); });
+
+  function showError(msg) {
+    els.error.textContent = msg;
+    els.error.classList.remove("hidden");
+  }
+  function clearError() { els.error.classList.add("hidden"); els.error.textContent = ""; }
+
+  function setLoading(btn, on) {
+    btn.disabled = on;
+    btn.replaceChildren(on ? h("span", { class: "spinner", "aria-hidden": "true" }) : document.createTextNode("Spåra"));
+    if (on) btn.append(h("span", { class: "sr-only", text: "Söker" }));
+    els.skeleton.classList.toggle("hidden", !on);
+    if (on) els.result.classList.add("hidden");
   }
 
-  function setTab(mode){
-    if(mode === "order"){
-      tabOrder.classList.add("active");
-      tabTracking.classList.remove("active");
-      orderForm.classList.remove("hidden");
-      trackForm.classList.add("hidden");
-    }else{
-      tabTracking.classList.add("active");
-      tabOrder.classList.remove("active");
-      trackForm.classList.remove("hidden");
-      orderForm.classList.add("hidden");
-    }
+  // ---------- API ----------
+  async function getJson(url) {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 20000);
+    try {
+      const res = await fetch(url, { signal: ctrl.signal, headers: { Accept: "application/json" } });
+      const data = await res.json().catch(() => ({ ok: false, error: "Oväntat svar från servern." }));
+      return data;
+    } catch (e) {
+      return { ok: false, error: e.name === "AbortError" ? "Det tog för lång tid att hämta spårningen. Försök igen." : "Ingen anslutning. Kontrollera internet och försök igen." };
+    } finally { clearTimeout(t); }
   }
 
-  function updateUrlWithTn(tn){
-    const url = new URL(window.location.href);
-    url.searchParams.set("tn", tn);
-    window.history.replaceState({}, "", url.toString());
+  async function trackTn(raw, { silent = false } = {}) {
+    const tn = String(raw || "").toUpperCase().replace(/[\s\-.#]/g, "");
+    if (!tn) return showError("Skriv in ditt spårningsnummer.");
+    clearError();
+    if (!silent) setLoading(els.tnBtn, true);
+    lastQuery = { type: "tn", tn };
+    const data = await getJson(`/api/track?tn=${encodeURIComponent(tn)}`);
+    if (!silent) setLoading(els.tnBtn, false);
+    if (!data.ok) return showError(data.error || "Vi kunde inte hämta spårningen just nu.");
+    const url = new URL(location.href);
+    url.searchParams.set("tn", data.trackingNumber || tn);
+    history.replaceState(null, "", url);
+    saveRecent(data.trackingNumber || tn);
+    render(data);
   }
 
-  function getProgress(data){
-    const milestone = normalizeText(data.statusMilestone);
-    const text = allEventsText(data);
-
-    // SVERIGE TERMINAL
-  if(
-    text.includes("terminal malmo") ||
-    text.includes("terminal malmö") ||
-    text.includes("paket har ankommit till var terminal") ||
-    text.includes("paketet har ankommit till var terminal") ||
-    text.includes("brevterminal") ||
-    text.includes("alvesta") ||
-    text.includes("karlskrona")
-  ){
-    return {
-      pct:85,
-      step:3,
-      title:"Paketet är i Sverige",
-      desc:"Paketet hanteras av lokal transportör och är nära leverans.",
-      icon:"🇸🇪"
-    };
+  async function trackOrder(order, email) {
+    order = String(order || "").replace(/[^0-9A-Za-z]/g, "");
+    email = String(email || "").trim();
+    if (!order || !email) return showError("Fyll i både ordernummer och e-postadress.");
+    if (!/^\S+@\S+\.\S+$/.test(email)) return showError("Kontrollera e-postadressen.");
+    clearError();
+    setLoading(els.orderBtn, true);
+    lastQuery = { type: "order", order, email };
+    const data = await getJson(`/api/track-order?order=${encodeURIComponent(order)}&email=${encodeURIComponent(email)}`);
+    setLoading(els.orderBtn, false);
+    if (!data.ok) return showError(data.error || "Vi kunde inte hitta ordern just nu.");
+    data._order = order;
+    render(data);
   }
 
-    if(
-      milestone === "delivered" ||
-      text.includes("levererats") ||
-      text.includes("delivered")
-    ){
-      return {
-        pct:100,
-        step:4,
-        title:"Paketet är levererat",
-        desc:"Din beställning har levererats.",
-        icon:"✅"
-      };
-    }
+  els.formTn.addEventListener("submit", (e) => { e.preventDefault(); trackTn(els.tnInput.value); });
+  els.formOrder.addEventListener("submit", (e) => { e.preventDefault(); trackOrder(els.orderInput.value, els.emailInput.value); });
 
-    if(
-      milestone === "out_for_delivery" ||
-      text.includes("ute for leverans") ||
-      text.includes("forbereds for leverans")
-    ){
-      return {
-        pct:85,
-        step:3,
-        title:"Paketet förbereds för leverans",
-        desc:"Paketet är nära och bör levereras snart.",
-        icon:"🚚"
-      };
-    }
+  // ---------- rendering ----------
+  const PHASE_TEXT = {
+    pending: ["Inväntar första skanning", "Spårningsnumret är skapat men transportören har inte registrerat paketet än. Det brukar ta 1–3 dagar."],
+    label_created: ["Ordern är registrerad", "Paketet är registrerat hos transportören och förbereds för avsändning."],
+    origin_facility: ["Paketet har lämnats in", "Paketet hanteras på transportörens lager och skickas snart iväg mot Sverige."],
+    departed_origin: ["På väg till Sverige", "Paketet är på internationell transport. Under flygresan skannas det ofta inte på några dagar."],
+    customs: ["Tullhantering", "Paketet går igenom tullen. Inga avgifter för dig – allt är redan betalt."],
+    eu_hub: ["Framme i Europa", "Paketet har kommit till Europa och transporteras vidare mot Sverige."],
+    in_sweden: ["Paketet är i Sverige", "Den svenska transportören har tagit över och sorterar paketet för leverans."],
+    out_for_delivery: ["Snart hos dig", "Paketet är lastat eller förbereds för utdelning i ditt område."],
+    failed_attempt: ["Leveransförsök misslyckades", "Transportören försökte leverera men det gick inte. Följ instruktionerna från transportören eller kontakta dem."],
+    available_for_pickup: ["Klart att hämta", "Paketet väntar på dig hos ditt ombud. Ta med legitimation och hämta inom liggtiden (oftast 7–14 dagar)."],
+    delivered: ["Levererat", "Ditt paket har levererats. Hoppas du blir nöjd med din tröja!"],
+  };
+  const STEPS = ["Registrerad", "På väg", "I Sverige", "Ute för leverans", "Levererad"];
+  const PHASE_STEP = { pending: 0, label_created: 1, origin_facility: 1, departed_origin: 2, customs: 2, eu_hub: 2, in_sweden: 3, out_for_delivery: 4, failed_attempt: 4, available_for_pickup: 5, delivered: 5 };
 
-    if(
-      milestone === "available_for_pickup" ||
-      text.includes("ready for pickup") ||
-      text.includes("klar for upphamtning")
-    ){
-      return {
-        pct:90,
-        step:3,
-        title:"Paketet är redo att hämtas",
-        desc:"Paketet finns troligen hos ombud eller utlämningsställe.",
-        icon:"📍"
-      };
-    }
-
-    if(
-      text.includes("alvesta") ||
-      text.includes("malmo") ||
-      text.includes("karlskrona") ||
-      text.includes("gnesta") ||
-      text.includes("brevterminal") ||
-      text.includes("sorting center")
-    ){
-      return {
-        pct:78,
-        step:3,
-        title:"Paketet är nära Sverige",
-        desc:"Paketet hanteras av lokal transportör och är nära leverans.",
-        icon:"🇸🇪"
-      };
-    }
-
-    if(
-      milestone === "in_transit" ||
-      text.includes("transit") ||
-      text.includes("flygbolag") ||
-      text.includes("airline") ||
-      text.includes("destination airport") ||
-      text.includes("destinationsflygplats")
-    ){
-      return {
-        pct:58,
-        step:2,
-        title:"Paketet är på väg",
-        desc:"Din beställning är skickad och transporteras just nu.",
-        icon:"✈️"
-      };
-    }
-
-    return {
-      pct:25,
-      step:1,
-      title:"Spårningen är registrerad",
-      desc:"Fraktinformation har skapats. Det kan ta lite tid innan paketet börjar röra sig.",
-      icon:"📦"
-    };
+  function mailto(tn, order) {
+    const subj = `Spårning ${order ? "order " + order : tn || ""}`.trim();
+    const body = `Hej!\n\nJag undrar över mitt paket.\n${order ? "Ordernummer: " + order + "\n" : ""}${tn ? "Spårningsnummer: " + tn + "\n" : ""}\n`;
+    return `mailto:${CONTACT}?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`;
   }
 
-  function getSmartEta(data){
-    const milestone = normalizeText(data.statusMilestone);
-    const text = allEventsText(data);
+  function render(data) {
+    current = data;
+    const R = els.result;
+    R.replaceChildren();
+    const tn = data.trackingNumber;
+    els.contactLink.href = mailto(tn, data._order);
 
-    if(
-      milestone === "delivered" ||
-      text.includes("levererats") ||
-      text.includes("delivered")
-    ){
-      return ["Levererad", "Paketet har levererats till mottagaren."];
-    }
-
-    if(
-      milestone === "out_for_delivery" ||
-      text.includes("ute for leverans")
-    ){
-      return ["Idag", "Paketet är ute för leverans och bör levereras under dagen."];
-    }
-
-    if(
-      text.includes("forbereds for leverans")
-    ){
-      return ["1–2 arbetsdagar", "Paketet är i Sverige och förbereds för leverans."];
-    }
-
-    if(
-      text.includes("processed at our sorting center") ||
-      text.includes("sorting center") ||
-      text.includes("brevterminal") ||
-      text.includes("alvesta") ||
-      text.includes("malmo") ||
-      text.includes("karlskrona")
-    ){
-      return ["1–3 arbetsdagar", "Paketet hanteras av lokal transportör i Sverige."];
-    }
-
-    if(
-  text.includes("arrived at the country of destination") ||
-  text.includes("ankom till destinationslandet")
-){
-  return ["2–3 arbetsdagar", "Paketet har anlänt till Sverige och väntar på lokal hantering."];
-}
-
-    if(
-      text.includes("handed over to a partner") ||
-      text.includes("partner for transportation")
-    ){
-      return ["2–5 arbetsdagar", "Paketet har lämnats över till lokal transportör för slutleverans."];
-    }
-
-    if(
-      text.includes("parcel outbound from transit center") ||
-      text.includes("outbound from transit center") ||
-      text.includes("paketet har lamnat transitcentret")
-    ){
-      return ["3–5 arbetsdagar", "Paketet har lämnat transitcentret och är på väg vidare."];
-    }
-
-    if(
-  text.includes("arrive in transit center") ||
-  text.includes("ankom till transitcenter") ||
-  text.includes("belgium")
-){
-  return ["3–5 arbetsdagar", "Paketet har ankommit till transitcenter i Europa och transporteras vidare."];
-}
-
-    if(
-      text.includes("customs cleared") ||
-      text.includes("tullklarerad")
-    ){
-      return ["4–6 arbetsdagar", "Paketet är tullklarerat och väntar på vidare transport."];
-    }
-
-    if(
-      text.includes("destination airport") ||
-      text.includes("destinationsflygplats")
-    ){
-      return ["4–6 arbetsdagar", "Paketet har anlänt till destinationsflygplats och fortsätter snart vidare."];
-    }
-
-    if(
-      text.includes("departure from the original airport") ||
-      text.includes("avgick fran ursprungsflygplats")
-    ){
-      return ["5–7 arbetsdagar", "Paketet har lämnat ursprungslandet och är på väg till Europa."];
-    }
-
-    if(
-      text.includes("hand over to airline") ||
-      text.includes("overlamnat till flygbolag")
-    ){
-      return ["7–8 arbetsdagar", "Paketet har överlämnats till flygbolag för internationell transport."];
-    }
-
-    if(
-      text.includes("depart from facility") ||
-      text.includes("lamnade anlaggning")
-    ){
-      return ["6-8 arbetsdagar", "Paketet har lämnat anläggningen och transporten har startat."];
-    }
-
-    if(
-      text.includes("shipment arrived at facility") ||
-      text.includes("ankom till anlaggning")
-    ){
-      return ["9–11 arbetsdagar", "Paketet har registrerats hos transportören och bearbetas."];
-    }
-
-    if(
-      text.includes("shipment picked up") ||
-      text.includes("hamtad av transportor")
-    ){
-      return ["11–13 arbetsdagar", "Paketet har hämtats av transportören."];
-    }
-
-    if(
-      text.includes("waiting for the parcel") ||
-      text.includes("vantar pa paketet") ||
-      text.includes("information received") ||
-      text.includes("parcel information received") ||
-      text.includes("fraktinformation mottagen") ||
-      text.includes("paketinformation mottagen")
-    ){
-      return ["Leveransdatum inte tillgängligt ännu", "Fraktinformation är mottagen. Paketet väntar på att börja röra sig."];
-    }
-
-    if(milestone === "in_transit"){
-      return ["6–10 arbetsdagar", "Paketet är under transport."];
-    }
-
-    return ["8–12 arbetsdagar", "Leveransprognosen uppdateras automatiskt när nya händelser registreras."];
-  }
-
-  function setProgressUI(info){
-    progressBar.style.width = info.pct + "%";
-
-    stepEls.forEach((el, index) => {
-      el.classList.toggle("active", index < info.step);
-    });
-  }
-
-  function buildLinks(postnord, citymail){
-    const links = [];
-
-    if(postnord){
-      links.push(`
-        <a class="link" href="https://www.postnord.se/vara-verktyg/spara-brev-paket-och-pall?shipmentId=${encodeURIComponent(postnord)}" target="_blank" rel="noopener noreferrer">
-          📦 Öppna i PostNord
-        </a>
-      `);
-    }
-
-    if(citymail){
-      links.push(`
-        <a class="link" href="https://tracking.citymail.se/?search=${encodeURIComponent(citymail)}" target="_blank" rel="noopener noreferrer">
-          📫 Öppna i CityMail
-        </a>
-      `);
-    }
-
-    return links.join("");
-  }
-
-  function renderCarrierNote(data){
-    if(data.carrierDetected === "postnord"){
-      carrierNote.textContent = "Transportör: PostNord. Klicka på knappen ovan för att följa paketet direkt hos PostNord.";
-    }else if(data.carrierDetected === "citymail"){
-      carrierNote.textContent = "Transportör: CityMail. Klicka på knappen ovan för att följa paketet direkt hos CityMail.";
-    }else{
-      carrierNote.textContent = "När paketet får ett lokalt spårningsnummer visas länk till PostNord eller CityMail här.";
-    }
-  }
-
-  async function renderResult(data){
-    const progress = getProgress(data);
-    const eta = getSmartEta(data);
-
-    statusOverline.textContent = data.statusSwedish || data.statusMilestone || "Orderstatus";
-    statusTitle.textContent = progress.title;
-    statusDesc.textContent = progress.desc;
-    statusIcon.textContent = progress.icon;
-
-    trackingValue.textContent = data.trackingNumber || "—";
-    postnordValue.textContent = data.postnordNumber || "Inte tilldelat ännu";
-    citymailValue.textContent = data.citymailNumber || "Inte tilldelat ännu";
-    updatedValue.textContent = formatDate(data.lastUpdate);
-
-    linksWrap.innerHTML = buildLinks(data.postnordNumber, data.citymailNumber);
-    renderCarrierNote(data);
-
-    etaBig.textContent = eta[0];
-    etaSmall.textContent = eta[1];
-
-    setProgressUI(progress);
-
-    eventsEl.innerHTML = "";
-
-    const events = Array.isArray(data.events) ? data.events : [];
-
-    if(!events.length){
-      eventsEl.innerHTML = `
-        <div class="emptyEvents">
-          Inga detaljerade händelser finns ännu. Detta är vanligt när paketet nyligen har skickats.
-        </div>
-      `;
-    }else{
-      events.forEach(ev => {
-        const div = document.createElement("div");
-        div.className = "event";
-
-        div.innerHTML = `
-          <div class="eventTime">${formatDate(ev.datetime)}</div>
-          <div class="eventStatus">${translateStatus(ev.status || "-")}</div>
-          <div class="eventLocation">${ev.location || ""}</div>
-        `;
-
-        eventsEl.appendChild(div);
+    // Flera paket på samma order (t.ex. omskick)
+    if (Array.isArray(data.packages) && data.packages.length > 1) {
+      const wrap = h("div", { class: "packages" }, h("span", { text: `Ordern har ${data.packages.length} paket:` }));
+      data.packages.forEach((p, i) => {
+        wrap.append(h("button", {
+          class: "pkg", type: "button", "aria-pressed": p === tn ? "true" : "false",
+          onclick: async () => {
+            const d = await getJson(`/api/track?tn=${encodeURIComponent(p)}`);
+            if (!d.ok) return showError(d.error || "Kunde inte hämta paketet.");
+            d.packages = data.packages; d._order = data._order; render(d);
+          },
+        }, i === 0 ? `Senaste (${p.slice(-6)})` : `Paket ${data.packages.length - i} (${p.slice(-6)})`));
       });
+      R.append(wrap);
     }
 
-    resultArea.style.display = "block";
-  }
+    // ----- Statuskort -----
+    const phase = data.phase || "pending";
+    const [title, desc] = data.exception
+      ? ["Problem med försändelsen", "Transportören rapporterar ett avvikande händelse. Kontakta oss så hjälper vi dig direkt."]
+      : PHASE_TEXT[phase] || PHASE_TEXT.pending;
+    const eta = data.eta || {};
 
-  async function trackByTrackingNumber(tn){
-    const value = String(tn || "").trim();
+    let badge;
+    if (phase === "delivered") badge = h("span", { class: "badge ok", text: "Levererad" });
+    else if (data.exception || eta.contactUs) badge = h("span", { class: "badge bad", text: "Behöver hjälp" });
+    else if (eta.state === "delayed") badge = h("span", { class: "badge warn", text: "Något försenad" });
+    else if (phase === "available_for_pickup") badge = h("span", { class: "badge ok", text: "Att hämta" });
+    else badge = h("span", { class: "badge", text: "Under transport" });
 
-    if(!value){
-      showError("Skriv in ett spårningsnummer först.");
-      return;
+    const card = h("article", { class: "card status" });
+    card.append(h("div", { class: "status-top" },
+      h("div", null,
+        h("div", { class: "eyebrow", text: data._order ? `Order #${data._order}` : "Status" }),
+        h("h2", { class: "status-title", text: title }),
+        h("p", { class: "status-desc", text: desc })),
+      badge));
+
+    // ETA
+    const etaBox = h("div", { class: "eta" });
+    if (eta.state === "delivered") {
+      etaBox.append(h("div", null, h("div", { class: "eta-label", text: "Levererad" }), h("div", { class: "eta-date", text: eta.subtitle ? cap(eta.subtitle.replace(/^Levererades /, "").replace(/\.$/, "")) : "Levererad" })));
+    } else if (eta.state === "pickup") {
+      etaBox.classList.add("hidden");
+    } else if (eta.minDate) {
+      const left = h("div", null,
+        h("div", { class: "eta-label", text: eta.state === "delayed" ? "Ny beräknad leverans" : "Beräknad leverans" }),
+        h("div", { class: "eta-date", text: eta.title }));
+      if (eta.likelyLabel && eta.minDate !== eta.maxDate) left.append(h("div", { class: "eta-likely" }, "Troligast: ", h("b", { text: eta.likelyLabel })));
+      etaBox.append(left, h("div", { class: "eta-note", text: eta.subtitle }));
+    } else {
+      etaBox.append(h("div", null, h("div", { class: "eta-label", text: "Beräknad leverans" }), h("div", { class: "eta-date", text: eta.title || "Beräknas snart" })), h("div", { class: "eta-note", text: eta.subtitle || "" }));
     }
+    if (eta.state === "contact") etaBox.classList.add("hidden"); // ersätts av notisen nedan
+    card.append(etaBox);
 
-    clearError();
-    trackBtn.disabled = true;
-    trackBtn.textContent = "Söker...";
+    // Steg
+    const stepIdx = PHASE_STEP[phase] ?? 0;
+    const ol = h("ol", { class: "steps", "aria-label": "Leveransförlopp" });
+    const fill = h("span", { class: "fill", "aria-hidden": "true" });
+    ol.append(fill);
+    STEPS.forEach((label, i) => {
+      const n = i + 1;
+      const done = n < stepIdx || (n === stepIdx && (phase === "delivered" || phase === "available_for_pickup"));
+      const cur = n === stepIdx && !done;
+      const text = n === 5 && phase === "available_for_pickup" ? "Att hämta" : label;
+      ol.append(h("li", { class: "step" + (done ? " done" : "") + (cur ? " current" : ""), "aria-current": cur ? "step" : null },
+        h("div", { class: "dot", html: ICON_CHECK }), text));
+    });
+    card.append(ol);
+    requestAnimationFrame(() => {
+      const pct = stepIdx <= 1 ? 0 : Math.min(100, ((stepIdx - 1) / 4) * 100);
+      fill.style.width = `calc(${pct}% * 0.8)`;
+    });
 
-    updateUrlWithTn(value);
+    // Notiser
+    if (eta.contactUs || data.exception) {
+      card.append(h("div", { class: "notice bad" }, h("span", { class: "ico", text: "⚠️" }),
+        h("div", null, eta.contactUs && eta.subtitle ? eta.subtitle : "Något verkar ha gått fel med försändelsen.", " ", h("a", { href: mailto(tn, data._order), text: "Skriv till oss →" }))));
+    } else if (eta.stale) {
+      card.append(h("div", { class: "notice" }, h("span", { class: "ico", text: "⏳" }), h("div", { text: eta.subtitle })));
+    } else if (phase === "failed_attempt") {
+      card.append(h("div", { class: "notice" }, h("span", { class: "ico", text: "📬" }), h("div", { text: "Har du fått en avisering? Följ instruktionerna i den eller öppna transportörens sida nedan för att boka ny leverans." })));
+    }
+    R.append(card);
 
-    try{
-      const res = await fetch(`/api/track?value=${encodeURIComponent(value)}&mode=tracking`);
-      const data = await res.json();
+    // ----- Info + transportör -----
+    const grid = h("div", { class: "grid2" });
 
-      if(!data.ok){
-        throw new Error(data.error || "Vi kunde inte hitta försändelsen just nu.");
+    const info = h("section", { class: "card panel" }, h("h2", { text: "Spårningsinformation" }));
+    const dl = h("dl", { style: "margin:0" });
+    const copyBtn = (v) => h("button", { class: "copy", type: "button", title: "Kopiera", "aria-label": "Kopiera " + v, html: ICON_COPY, onclick: () => copy(v) });
+    dl.append(h("div", { class: "kv" }, h("dt", { text: "Spårningsnummer" }), h("dd", null, h("span", { class: "mono", text: tn || "—" }), tn ? copyBtn(tn) : null)));
+    (data.carriers || []).filter((c) => c.trackingNumber && c.trackingNumber !== tn).forEach((c) => {
+      dl.append(h("div", { class: "kv" }, h("dt", { text: `${c.name}-nummer` }), h("dd", null, h("span", { class: "mono", text: c.trackingNumber }), copyBtn(c.trackingNumber))));
+    });
+    if (data.lastEventAt) dl.append(h("div", { class: "kv" }, h("dt", { text: "Senaste skanning" }), h("dd", { text: relTime(data.lastEventAt) })));
+    info.append(dl);
+    const actions = h("div", { class: "actions" },
+      h("button", { class: "btn-ghost", type: "button", onclick: refresh }, "↻ Uppdatera"),
+      h("button", { class: "btn-ghost", type: "button", onclick: share }, "Dela länk"));
+    info.append(actions);
+    grid.append(info);
+
+    const carrierPanel = h("section", { class: "card panel" }, h("h2", { text: "Transportör" }));
+    const linkable = (data.carriers || []).filter((c) => c.url);
+    if (linkable.length) {
+      const lm = data.lastMile;
+      carrierPanel.append(h("p", { class: "muted", style: "margin:0 0 4px", text: lm ? `${lm.name} levererar paketet sista biten i Sverige.` : "Följ paketet direkt hos transportören:" }));
+      linkable.forEach((c) => {
+        carrierPanel.append(h("a", { class: "carrier-btn", href: c.url, target: "_blank", rel: "noopener noreferrer" },
+          h("span", null, `Följ hos ${c.name}`, h("small", { class: "mono", text: c.trackingNumber })),
+          h("span", { html: ICON_EXT, "aria-hidden": "true" })));
+      });
+    } else {
+      carrierPanel.append(h("p", { class: "muted", style: "margin:0", text: data.crossBorder || !data.carriers ? "När paketet kommer till Sverige får det ett nummer hos PostNord eller CityMail. Länken dyker upp här automatiskt." : "Transportörens egen spårningssida är inte tillgänglig för det här paketet." }));
+    }
+    grid.append(carrierPanel);
+    R.append(grid);
+
+    // ----- Händelser -----
+    const evPanel = h("section", { class: "card panel" }, h("h2", { text: "Händelser" }));
+    const events = Array.isArray(data.events) ? data.events : [];
+    if (!events.length) {
+      evPanel.append(h("p", { class: "muted", style: "margin:0", text: "Inga händelser ännu. Det är normalt de första dagarna efter att paketet skickats – kika in igen imorgon." }));
+    } else {
+      const list = h("div", { class: "timeline" });
+      const LIMIT = 8;
+      let lastDay = null;
+      events.forEach((ev, i) => {
+        const d = ev.datetime ? new Date(ev.datetime) : null;
+        const day = d ? dayLabel(d) : "Okänt datum";
+        const row = h("div", { class: "ev" + (i === 0 ? " first" : ""), "data-i": i },
+          h("div", { class: "ev-time", text: d && !ev.hasNoTime ? fmtTime.format(d) : "" }),
+          h("div", { class: "ev-line" }),
+          h("div", null,
+            h("div", { class: "ev-status", text: ev.status || "—" }),
+            (ev.location || ev.courier) ? h("div", { class: "ev-meta", text: [ev.location, ev.courier].filter(Boolean).join(" · ") }) : null));
+        const dayEl = day !== lastDay ? h("div", { class: "day", text: day, "data-i": i }) : null;
+        lastDay = day;
+        if (i >= LIMIT) { row.classList.add("hidden"); if (dayEl) dayEl.classList.add("hidden"); }
+        if (dayEl) list.append(dayEl);
+        list.append(row);
+      });
+      evPanel.append(list);
+      if (events.length > LIMIT) {
+        const btn = h("button", { class: "btn-ghost more", type: "button" }, `Visa alla ${events.length} händelser`);
+        btn.addEventListener("click", () => { list.querySelectorAll(".hidden").forEach((x) => x.classList.remove("hidden")); btn.remove(); });
+        evPanel.append(btn);
       }
-
-      await renderResult(data);
-    }catch(err){
-      showError(err.message || "Vi kunde inte hämta spårningen just nu.");
-    }finally{
-      trackBtn.disabled = false;
-      trackBtn.textContent = "Spåra paket";
     }
+    if (data.checkedAt) evPanel.append(h("p", { class: "muted", style: "margin:14px 0 0;font-size:12.5px", text: `Hämtat ${fmtShort.format(new Date(data.checkedAt))}` }));
+    R.append(evPanel);
+
+    els.result.classList.remove("hidden");
+    els.skeleton.classList.add("hidden");
+    if (window.matchMedia("(max-width:680px)").matches) card.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
-  async function trackByOrder(order, email){
-    const o = String(order || "").trim();
-    const e = String(email || "").trim();
-
-    if(!o || !e){
-      showError("Skriv in både ordernummer och e-postadress.");
-      return;
-    }
-
-    clearError();
-    orderBtn.disabled = true;
-    orderBtn.textContent = "Söker...";
-
-    try{
-      const res = await fetch(`/api/track-order?order=${encodeURIComponent(o)}&email=${encodeURIComponent(e)}`);
-      const data = await res.json();
-
-      if(!data.ok){
-        throw new Error(data.error || "Vi kunde inte hitta ordern just nu.");
-      }
-
-      await renderResult(data);
-    }catch(err){
-      showError(err.message || "Vi kunde inte hämta ordern just nu.");
-    }finally{
-      orderBtn.disabled = false;
-      orderBtn.textContent = "Spåra order";
-    }
+  async function refresh() {
+    if (!lastQuery) return;
+    if (lastQuery.type === "tn") await trackTn(lastQuery.tn, { silent: true });
+    else await trackOrder(lastQuery.order, lastQuery.email);
+    toast("Uppdaterat");
   }
 
-  tabTracking.addEventListener("click", () => setTab("tracking"));
-  tabOrder.addEventListener("click", () => setTab("order"));
-
-  trackForm.addEventListener("submit", e => {
-    e.preventDefault();
-    trackByTrackingNumber(trackingInput.value);
-  });
-
-  orderForm.addEventListener("submit", e => {
-    e.preventDefault();
-    trackByOrder(orderInput.value, emailInput.value);
-  });
-
-  (function init(){
-    const url = new URL(window.location.href);
-    const tn = url.searchParams.get("tn");
-
-    if(tn){
-      setTab("tracking");
-      trackingInput.value = tn;
-      trackByTrackingNumber(tn);
+  async function share() {
+    if (!current || !current.trackingNumber) return;
+    const url = `${location.origin}${location.pathname}?tn=${encodeURIComponent(current.trackingNumber)}`;
+    if (navigator.share) {
+      try { await navigator.share({ title: "Spåra paket – ICEFOT", url }); return; } catch {}
     }
-  })();
+    copy(url);
+  }
+
+  // ---------- start ----------
+  renderRecent();
+  const params = new URL(location.href).searchParams;
+  const startTn = params.get("tn") || params.get("value");
+  if (startTn) {
+    els.tnInput.value = startTn;
+    trackTn(startTn);
+  } else if (params.get("order")) {
+    setTab("order");
+    els.orderInput.value = params.get("order");
+    // E-post läggs aldrig i länken (integritet)
+    els.emailInput.focus();
+  }
+})();
 </script>
+</body>
+</html>

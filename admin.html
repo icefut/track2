@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Lägg till ordrar | ICEFOT</title>
+  <style>
+    :root{--bg:#f6f6f7;--s:#fff;--t:#111;--m:#666;--b:#e4e4e8;--ok:#15803d;--bad:#b91c1c}
+    @media (prefers-color-scheme: dark){:root{--bg:#0b0b0c;--s:#151517;--t:#f4f4f5;--m:#a8a8b0;--b:#2a2a2f;--ok:#4ade80;--bad:#f87171}}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--t);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+    main{max-width:760px;margin:0 auto;padding:28px 16px}
+    h1{font-size:26px;margin:0 0 4px}
+    p{color:var(--m);margin:0 0 18px}
+    .card{background:var(--s);border:1px solid var(--b);border-radius:16px;padding:18px}
+    label{display:block;font-weight:600;font-size:13px;margin:0 0 6px}
+    input,textarea{width:100%;border:1px solid var(--b);background:var(--s);color:var(--t);border-radius:10px;padding:12px;font:inherit}
+    textarea{min-height:280px;font-family:ui-monospace,Menlo,monospace;font-size:13px;resize:vertical}
+    .row{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+    button{border:0;border-radius:10px;padding:12px 18px;font-weight:700;cursor:pointer;background:var(--t);color:var(--bg);font:inherit;font-weight:700}
+    button.sec{background:transparent;color:var(--t);border:1px solid var(--b)}
+    button:disabled{opacity:.6}
+    #out{margin-top:14px;font-size:14px;white-space:pre-wrap}
+    .ok{color:var(--ok)}.bad{color:var(--bad)}
+  </style>
+</head>
+<body>
+<main>
+  <h1>Lägg till ordrar</h1>
+  <p>Klistra in ordrar i samma format som gamla <code>orders-data.js</code>, eller en rad per order:<br><code>37157, kund@mail.se, 4PX3003133621569CN</code>. Dubbletter ignoreras.</p>
+  <div class="card">
+    <label for="token">Admin-lösenord (ADMIN_TOKEN)</label>
+    <input id="token" type="password" autocomplete="current-password" />
+    <div style="height:12px"></div>
+    <label for="text">Ordrar</label>
+    <textarea id="text" spellcheck="false" placeholder='{ order_number: "37160", email: "kund@mail.se", tracking_number: "4PX3003133618972CN" },'></textarea>
+    <div class="row">
+      <button class="sec" id="preview" type="button">Förhandsgranska</button>
+      <button id="save" type="button">Spara</button>
+    </div>
+    <div id="out" role="status"></div>
+  </div>
+</main>
+<script>
+  const $ = (id) => document.getElementById(id);
+  try { $("token").value = sessionStorage.getItem("icefot_admin") || ""; } catch {}
+  async function send(dryRun) {
+    const out = $("out");
+    out.className = ""; out.textContent = "Skickar…";
+    try { sessionStorage.setItem("icefot_admin", $("token").value); } catch {}
+    $("save").disabled = $("preview").disabled = true;
+    try {
+      const res = await fetch("/api/admin-orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-admin-token": $("token").value },
+        body: JSON.stringify({ text: $("text").value, dryRun }),
+      });
+      const d = await res.json();
+      if (!d.ok) { out.className = "bad"; out.textContent = d.error || "Något gick fel."; return; }
+      out.className = "ok";
+      out.textContent = dryRun
+        ? `${d.count} giltiga ordrar hittades${d.invalid ? `, ${d.invalid} ogiltiga rader hoppas över` : ""}.\n\nExempel:\n` + d.preview.map((r) => `#${r.order_number}  ${r.email}  ${r.tracking_number}`).join("\n")
+        : `Sparat ${d.saved} ordrar ✔${d.invalid ? ` (${d.invalid} ogiltiga rader hoppades över)` : ""}`;
+      if (!dryRun) $("text").value = "";
+    } catch (e) {
+      out.className = "bad"; out.textContent = "Kunde inte nå servern.";
+    } finally {
+      $("save").disabled = $("preview").disabled = false;
+    }
+  }
+  $("preview").onclick = () => send(true);
+  $("save").onclick = () => send(false);
+</script>
+</body>
+</html>
